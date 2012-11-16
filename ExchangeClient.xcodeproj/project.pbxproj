@@ -26,6 +26,7 @@
 		CEB11AC01654691700D862E6 /* GDataXMLNode.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB11ABF1654691700D862E6 /* GDataXMLNode.m */; };
 		CEB11AC6165469A000D862E6 /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CEB11AC5165469A000D862E6 /* libxml2.dylib */; };
 		CEB11AC91655782300D862E6 /* ServerWhisperer.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB11AC81655782300D862E6 /* ServerWhisperer.m */; };
+		CEB11ACD1656CBB500D862E6 /* DataManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB11ACC1656CBB500D862E6 /* DataManager.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -58,6 +59,9 @@
 		CEB11AC5165469A000D862E6 /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
 		CEB11AC71655782300D862E6 /* ServerWhisperer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ServerWhisperer.h; sourceTree = "<group>"; };
 		CEB11AC81655782300D862E6 /* ServerWhisperer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ServerWhisperer.m; sourceTree = "<group>"; };
+		CEB11ACB1656CBB500D862E6 /* DataManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataManager.h; sourceTree = "<group>"; };
+		CEB11ACC1656CBB500D862E6 /* DataManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataManager.m; sourceTree = "<group>"; };
+		CEB11ACE1656CD4A00D862E6 /* Defines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Defines.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,11 +133,13 @@
 		C3CB568116501F3C002E75B2 /* ExchangeClient */ = {
 			isa = PBXGroup;
 			children = (
+				CEB11ACE1656CD4A00D862E6 /* Defines.h */,
 				C3CB568A16501F3C002E75B2 /* AppDelegate.h */,
 				C3CB568B16501F3C002E75B2 /* AppDelegate.m */,
 				C318073B1650347C00F87853 /* User Interface */,
 				CE7681F816530BDF009EE5E4 /* Connection management */,
 				CEB11ABC165468E900D862E6 /* XML Parsing */,
+				CEB11ACA1656CB7900D862E6 /* Data Management */,
 				C31807391650345A00F87853 /* XIBs */,
 				C3CB568216501F3C002E75B2 /* Supporting Files */,
 			);
@@ -172,6 +178,15 @@
 				CEB11ABF1654691700D862E6 /* GDataXMLNode.m */,
 			);
 			name = "XML Parsing";
+			sourceTree = "<group>";
+		};
+		CEB11ACA1656CB7900D862E6 /* Data Management */ = {
+			isa = PBXGroup;
+			children = (
+				CEB11ACB1656CBB500D862E6 /* DataManager.h */,
+				CEB11ACC1656CBB500D862E6 /* DataManager.m */,
+			);
+			name = "Data Management";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -250,6 +265,7 @@
 				CE7681FC16530C15009EE5E4 /* ConnectionManager.m in Sources */,
 				CEB11AC01654691700D862E6 /* GDataXMLNode.m in Sources */,
 				CEB11AC91655782300D862E6 /* ServerWhisperer.m in Sources */,
+				CEB11ACD1656CBB500D862E6 /* DataManager.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

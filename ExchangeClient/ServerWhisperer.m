@@ -9,10 +9,12 @@
 #import "ServerWhisperer.h"
 #import "GDataXMLNode.h"
 #import "ConnectionManager.h"
+#import "Defines.h"
 
 typedef enum {
     ServerWhispererCurrentOperationGetFolder,
-    ServerWhispererCurrentOperationGetItem
+    ServerWhispererCurrentOperationGetItem,
+    ServerWhispererCurrentOperationSyncFolderItems
 } ServerWhispererCurrentOperation;
 
 @interface ServerWhisperer () {
@@ -47,7 +49,7 @@ typedef enum {
     return self;
 }
 
-- (id) getFolderWithName:(NSString *)folder {
+- (NSDictionary *) getFolderWithName:(NSString *)folder {
     _currentOperation = ServerWhispererCurrentOperationGetFolder;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -109,12 +111,73 @@ xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
 - (void) connectionManager:(ConnectionManager *)manager didFinishLoadingData:(NSData *)data {
     GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:data options:nil error:nil];
     
+    // Не забыть выкинуть к релизу
+    NSString *debugString = [NSString stringWithUTF8String:[data bytes]];
+    NSLog(@"%@", debugString);
+    
     switch (_currentOperation) {
         case ServerWhispererCurrentOperationGetFolder:
-            // Здесь формируем объект, чтобы вернуть создателю (DataManager'у)
+            ;
+            NSString *getFolderResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
+            if ([getFolderResponseCode isEqualToString:@"NoError"]) {
+                GDataXMLElement *folderXML = [[response nodesForXPath:@"//t:Folder" error:nil] objectAtIndex:0];
+                
+                GDataXMLElement *folderIDXML = [[folderXML elementsForName:@"t:FolderId"] objectAtIndex:0];
+                NSString *folderID = [[folderIDXML attributeForName:@"Id"] stringValue];
+                NSString *folderIDChangeKey = [[folderIDXML attributeForName:@"ChangeKey"] stringValue];
+                
+                NSString *displayName = [[[folderXML elementsForName:@"t:DisplayName"] objectAtIndex:0] stringValue];
+                
+                NSString *totalCount = [[[folderXML elementsForName:@"t:TotalCount"] objectAtIndex:0] stringValue];
+                
+                NSString *unreadCount = [[[folderXML elementsForName:@"t:UnreadCount"] objectAtIndex:0] stringValue];
+                
+                _currentOperationResult = [NSDictionary dictionaryWithObjectsAndKeys:folderID, @"FolderID", folderIDChangeKey, @"FolderIDChangeKey", displayName, @"DisplayName", totalCount, @"TotalCount", unreadCount, @"UnreadCount", nil];
+            }
+            else {
+                NSLog(@"Error response");
+            }
             break;
             
         case ServerWhispererCurrentOperationGetItem:
+            ;
+            NSString *getItemResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
+            if ([getItemResponseCode isEqualToString:@"NoError"]) {
+                GDataXMLElement *itemXML = [[response nodesForXPath:@"//t:Message" error:nil] objectAtIndex:0];
+                
+                GDataXMLElement *itemIDXML = [[itemXML elementsForName:@"t:ItemId"] objectAtIndex:0];
+                NSString *itemID = [[itemIDXML attributeForName:@"Id"] stringValue];
+                NSString *itemIDChangeKey = [[itemIDXML attributeForName:@"ChangeKey"] stringValue];
+                
+                NSString *subject = [[[itemXML elementsForName:@"t:Subject"] objectAtIndex:0] stringValue];
+                
+                GDataXMLElement *bodyXML = [[itemXML elementsForName:@"t:Body"] objectAtIndex:0];
+                NSString *body = [bodyXML stringValue];
+                NSString *bodyTypeString = [[bodyXML attributeForName:@"BodyType"] stringValue];
+                NSUInteger bodyType = [bodyTypeString isEqualToString:@"HTML"] ? EMailContentTypeHTML : EMailContentTypePlainText;
+                
+                NSArray *recipientsXML = [itemXML nodesForXPath:@"//t:ToRecipients/t:Mailbox" error:nil];
+                NSMutableArray *recipients = [NSMutableArray array];
+                for (GDataXMLElement *singleRecipientXML in recipientsXML) {
+                    NSString *name = [[[singleRecipientXML elementsForName:@"t:Name"] objectAtIndex:0] stringValue];
+                    NSString *email = [[[singleRecipientXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
+                    
+                    [recipients addObject:[NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", email, @"EmailAddress", nil]];
+                }
+                
+                GDataXMLElement *senderXML = [[itemXML nodesForXPath:@"//t:From" error:nil] objectAtIndex:0];
+                NSString *senderName = [[[senderXML nodesForXPath:@"//t:Name" error:nil] objectAtIndex:0] stringValue];
+                NSString *senderEMail = [[[senderXML nodesForXPath:@"//t:EmailAddress" error:nil] objectAtIndex:0] stringValue];
+                NSDictionary *sender = [NSDictionary dictionaryWithObjectsAndKeys:senderName, @"Name", senderEMail, @"EmailAddress", nil];
+                
+                _currentOperationResult = [NSDictionary dictionaryWithObjectsAndKeys:itemID, @"ItemID", itemIDChangeKey, @"ItemIDChangeKey", subject, @"Subject", bodyType, @"BodyType", recipients, @"Recipients", sender, @"From", nil];
+            }
+            else {
+                NSLog(@"Error response");
+            }
+            break;
+            
+        case ServerWhispererCurrentOperationSyncFolderItems:
             
             break;
             
@@ -123,6 +186,8 @@ xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
     }
 
     [manager release];
+    
+    [response release];
 }
 
 @end
