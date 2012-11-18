@@ -20,7 +20,6 @@ typedef enum {
 
 @interface ServerWhisperer () {
     ServerWhispererCurrentOperation _currentOperation;
-    id _currentOperationResult;
 }
 
 @end
@@ -30,6 +29,7 @@ typedef enum {
 @synthesize serverURL = _serverURL;
 @synthesize userName = _userName;
 @synthesize password = _password;
+@synthesize delegate = _delegate;
 
 - (void) dealloc {
     self.serverURL = nil;
@@ -39,18 +39,19 @@ typedef enum {
     [super dealloc];
 }
 
-- (id) initWithServerURL:(NSURL *)serverURL withUserName:(NSString *)userName withPassword:(NSString *)password {
+- (id) initWithServerURL:(NSURL *)serverURL withUserName:(NSString *)userName withPassword:(NSString *)password withDelegate:(id<ServerWhispererDelegate>)delegate {
     self = [super init];
     if (self) {
         _serverURL = [serverURL retain];
         _userName = [userName retain];
         _password = [password retain];
+        _delegate = delegate;
     }
     
     return self;
 }
 
-- (NSDictionary *) getFolderWithID:(NSString *)folderID {
+- (void) getFolderWithID:(NSString *)folderID {
     _currentOperation = ServerWhispererCurrentOperationGetFolder;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -60,11 +61,9 @@ typedef enum {
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
     [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestSyncItemsInFolderWithID:folderID]];
-    
-    return _currentOperationResult;
 }
 
-- (NSDictionary *) getItemWithID:(NSString *)itemID {
+- (void) getItemWithID:(NSString *)itemID {
     _currentOperation = ServerWhispererCurrentOperationGetItem;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -74,11 +73,9 @@ typedef enum {
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
     [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetItemWithID:itemID]];
-    
-    return _currentOperationResult;
 }
 
-- (NSArray *) getItemsInFoldeWithID:(NSString *)folderID {
+- (void) getItemsInFoldeWithID:(NSString *)folderID {
     _currentOperation = ServerWhispererCurrentOperationGetItem;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -88,11 +85,9 @@ typedef enum {
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
     [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetItemWithID:folderID]];
-    
-    return _currentOperationResult;
 }
 
-- (NSArray *) getFolderHierarchy {
+- (void) getFolderHierarchy {
     _currentOperation = ServerWhispererCurrentOperationGetItem;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -102,8 +97,6 @@ typedef enum {
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
     [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestSyncFolderHierarchy]];
-    
-    return _currentOperationResult;
 }
 
 - (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
@@ -269,7 +262,8 @@ typedef enum {
             if ([getFolderResponseCode isEqualToString:@"NoError"]) {
                 GDataXMLElement *folderXML = [[response nodesForXPath:@"//t:Folder" error:nil] objectAtIndex:0];
                 
-                _currentOperationResult = [self dictionaryForFolderXML:folderXML];
+                 [self.delegate serverWhisperer:self
+                         didFinishLoadingFolder:[self dictionaryForFolderXML:folderXML]];
             }
             else
                 NSLog(@"Error response");
@@ -281,7 +275,8 @@ typedef enum {
             if ([getItemResponseCode isEqualToString:@"NoError"]) {
                 GDataXMLElement *messageXML = [[response nodesForXPath:@"//t:Message" error:nil] objectAtIndex:0];
                 
-                _currentOperationResult = [self dictionaryForMessageXML:messageXML];
+                [self.delegate serverWhisperer:self
+                       didFinishLoadingMessage:[self dictionaryForMessageXML:messageXML]];
             }
             else
                 NSLog(@"Error response");
@@ -298,7 +293,7 @@ typedef enum {
                     [result addObject:[self dictionaryForMessageXML:currentMessage]];
                 }
                 
-                _currentOperationResult = result;
+                [self.delegate serverWhisperer:self didFinishLoadingItems:result];
             }
             else
                 NSLog(@"Error response");
@@ -314,7 +309,7 @@ typedef enum {
                     [result addObject:[self dictionaryForFolderXML:currentFolder]];
                 }
                 
-                _currentOperationResult = result;
+                [self.delegate serverWhisperer:self didFinishLoadingFolderHierarchy:result];
             }
             else
                 NSLog(@"Error response");

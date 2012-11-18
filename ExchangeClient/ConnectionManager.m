@@ -41,7 +41,7 @@
 {
     _credential = credential;
     
-    NSMutableURLRequest *request = [NSURLRequest requestWithURL:serverURL];
+    NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:serverURL];
     
     [request setHTTPMethod:@"POST"];
     [request setValue:@"application/xml; charset=utf-8" forHTTPHeaderField:@"Content-Type"];

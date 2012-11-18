@@ -9,16 +9,27 @@
 #import <Foundation/Foundation.h>
 #import "ConnectionManager.h"
 
+@protocol ServerWhispererDelegate;
+
 @interface ServerWhisperer : NSObject <ConnectionManagerDelegate>
 
 @property (nonatomic, retain) NSURL *serverURL;
 @property (nonatomic, retain) NSString *userName;
 @property (nonatomic, retain) NSString *password;
+@property (nonatomic, assign) id<ServerWhispererDelegate> delegate;
 
 // Предполагается, что инициализирует его LoginViewController, и он же назначит делегатом TableViewController'а. Можно и по другому, на работу не влияет.
 - (id) initWithServerURL:(NSURL *)server withUserName:(NSString *)userName withPassword:(NSString *)password;
+- (void) getFolderWithID:(NSString *)folderID;
+- (void) getItemWithID:(NSString *)itemID;
+- (NSArray *) getItemsInFoldeWithID:(NSString *)folderID;
+- (void) getFolderHierarchy;
 
-/* Метод возвращает словарь для папки. Ключи (Все ключи и значения - NSString):
+@end
+
+@protocol ServerWhispererDelegate <NSObject>
+
+/* Метод передает словарь для папки. Ключи (Все ключи и значения - NSString):
  FolderID - по нему и нужно делать запрос
  FolderIDChangeKey - пока не используем
  ParentFolderID
@@ -26,10 +37,10 @@
  DisplayName - это имя сервер предлагает вывести
  TotalCount - число элементов в папке
  UnreadCount - число непрочитанных писем
-*/
-- (NSDictionary *) getFolderWithID:(NSString *)folderID;
+ */
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder;
 
-/* Метод возвращает словарь для письма. Ключи (Все ключи - NSString, все значения, кроме BodyType, Recipients и From - NSString):
+/* Метод передает словарь для письма. Ключи (Все ключи - NSString, все значения, кроме BodyType, Recipients и From - NSString):
  ItemID - по нему и нужно делать запрос
  ItemIDChangeKey - пока не используем
  ParentFolderID
@@ -38,18 +49,18 @@
  Body - содержимое
  BodyType - тип содержимого письма (EMailContentType-константа, определены в Defines.h)
  Recipients - NSArray словарей получателей. Ключи словарей получателей:
-    Name
-    EmailAddress
+ Name
+ EmailAddress
  From - словарь отправителя. Ключи:
-    Name
-    EmailAddress
+ Name
+ EmailAddress
  */
-- (NSDictionary *) getItemWithID:(NSString *)itemID;
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)folder;
 
-// Возвращает массив словарей, как в getItemWithID
-- (NSArray *) getItemsInFoldeWithID:(NSString *)folderID;
+// Передает массив словарей, как в getItemWithID
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolderHierarchy:(NSArray *)hierarchy;
 
-// Возвращает массив словарей, как в getFolderWithID
-- (NSArray *) getFolderHierarchy;
+// Передает массив словарей, как в getFolderWithID
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItems:(NSArray *)items;
 
 @end
