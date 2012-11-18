@@ -50,7 +50,7 @@ typedef enum {
     return self;
 }
 
-- (NSDictionary *) getFolderWithName:(NSString *)folderName {
+- (NSDictionary *) getFolderWithID:(NSString *)folderID {
     _currentOperation = ServerWhispererCurrentOperationGetFolder;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -59,7 +59,7 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetFolderWithName:folderName]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestSyncItemsInFolderWithID:folderID]];
     
     return _currentOperationResult;
 }
@@ -78,7 +78,7 @@ typedef enum {
     return _currentOperationResult;
 }
 
-- (NSArray *) getItemsInFoldeWithName:(NSString *)folderName {
+- (NSArray *) getItemsInFoldeWithID:(NSString *)folderID {
     _currentOperation = ServerWhispererCurrentOperationGetItem;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
@@ -87,7 +87,7 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetItemWithID:folderName]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetItemWithID:folderID]];
     
     return _currentOperationResult;
 }
@@ -106,7 +106,7 @@ typedef enum {
     return _currentOperationResult;
 }
 
-- (NSData *) XMLRequestGetFolderWithName:(NSString *)folderName {
+- (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
     NSString *string = [NSString stringWithFormat:@"<?xmlversion=\"1.0\"encoding=\"utf-8\"?>\
                         <soap:Envelope\
                         xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
@@ -118,11 +118,11 @@ typedef enum {
                         <t:BaseShape>Default</t:BaseShape>\
                         </FolderShape>\
                         <FolderIds>\
-                        <t:DistinguishedFolderId Id=\"%@\"/>\
+                        <t:FolderId Id=\"%@\"/>\
                         </FolderIds>\
                         </GetFolder>\
                         </soap:Body>\
-                        </soap:Envelope>", folderName];
+                        </soap:Envelope>", folderID];
     
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
@@ -139,11 +139,11 @@ typedef enum {
                         xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <ItemShape>\
-                        <t:BaseShape>Default</t:BaseShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
                         <t:IncludeMimeContent>true</t:IncludeMimeContent>\
                         </ItemShape>\
                         <ItemIds>\
-                        <t:ItemId Id=\"%@\" ChangeKey=\"\" />\
+                        <t:ItemId Id=\"%@\"/>\
                         </ItemIds>\
                         </GetItem>\
                         </soap:Body>\
@@ -152,24 +152,24 @@ typedef enum {
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-- (NSData *) XMLRequestSyncFolderItems:(NSString *)folderName {
+- (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                             xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <soap:Body>\
                         <SyncFolderItems xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
                         <ItemShape>\
-                        <t:BaseShape>Default</t:BaseShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
                         </ItemShape>\
                         <SyncFolderId>\
-                        <t:DistinguishedFolderId Id=\"%@\"/>\
+                        <t:FolderId Id=\"%@\"/>\
                         </SyncFolderId>\
                         <Ignore>\
                         </Ignore>\
                         <MaxChangesReturned>100</MaxChangesReturned>\
                         </SyncFolderItems>\
                         </soap:Body>\
-                        </soap:Envelope>", folderName];
+                        </soap:Envelope>", folderID];
     
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
@@ -206,13 +206,23 @@ typedef enum {
     
     NSString *unreadCount = [[[folderXML elementsForName:@"t:UnreadCount"] objectAtIndex:0] stringValue];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:folderID, @"FolderID", folderIDChangeKey, @"FolderIDChangeKey", parentFolderID, @"ParentFolderID", parentFolderIDChangeKey, @"ParentFolderIDChangeKey", displayName, @"DisplayName", totalCount, @"TotalCount", unreadCount, @"UnreadCount", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:folderID, @"FolderID",
+            folderIDChangeKey, @"FolderIDChangeKey",
+            parentFolderID, @"ParentFolderID",
+            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
+            displayName, @"DisplayName",
+            totalCount, @"TotalCount",
+            unreadCount, @"UnreadCount", nil];
 }
 
 - (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
     GDataXMLElement *itemIDXML = [[messageXML elementsForName:@"t:ItemId"] objectAtIndex:0];
     NSString *itemID = [[itemIDXML attributeForName:@"Id"] stringValue];
     NSString *itemIDChangeKey = [[itemIDXML attributeForName:@"ChangeKey"] stringValue];
+    
+    GDataXMLElement *parentFolderIDXML = [[messageXML elementsForName:@"t:ParentFolderId"] objectAtIndex:0];
+    NSString *parentFolderID = [[parentFolderIDXML attributeForName:@"Id"] stringValue];
+    NSString *parentFolderIDChangeKey = [[parentFolderIDXML attributeForName:@"ChangeKey"] stringValue];
     
     NSString *subject = [[[messageXML elementsForName:@"t:Subject"] objectAtIndex:0] stringValue];
     
@@ -235,7 +245,15 @@ typedef enum {
     NSString *senderEMail = [[[senderXML nodesForXPath:@"//t:EmailAddress" error:nil] objectAtIndex:0] stringValue];
     NSDictionary *sender = [NSDictionary dictionaryWithObjectsAndKeys:senderName, @"Name", senderEMail, @"EmailAddress", nil];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:itemID, @"ItemID", itemIDChangeKey, @"ItemIDChangeKey", subject, @"Subject", body, @"Body", bodyType, @"BodyType", recipients, @"Recipients", sender, @"From", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:itemID, @"ItemID",
+            itemIDChangeKey, @"ItemIDChangeKey",
+            parentFolderID, @"ParentFolderID",
+            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
+            subject, @"Subject",
+            body, @"Body",
+            bodyType, @"BodyType",
+            recipients, @"Recipients",
+            sender, @"From", nil];
 }
 
 - (void) connectionManager:(ConnectionManager *)manager didFinishLoadingData:(NSData *)data {
@@ -278,6 +296,22 @@ typedef enum {
                 NSArray *messages = [response nodesForXPath:@"//t:Message" error:nil];
                 for (GDataXMLElement *currentMessage in messages) {
                     [result addObject:[self dictionaryForMessageXML:currentMessage]];
+                }
+                
+                _currentOperationResult = result;
+            }
+            else
+                NSLog(@"Error response");
+            break;
+        }
+        case ServerWhispererCurrentOperationSyncFolderHierarchy: {
+            NSString *getItemResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
+            if ([getItemResponseCode isEqualToString:@"NoError"]) {
+                NSMutableArray *result = [NSMutableArray array];
+                
+                NSArray *folders = [response nodesForXPath:@"//t:Folder" error:nil];
+                for (GDataXMLElement *currentFolder in folders) {
+                    [result addObject:[self dictionaryForFolderXML:currentFolder]];
                 }
                 
                 _currentOperationResult = result;
