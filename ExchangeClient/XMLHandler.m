@@ -13,7 +13,7 @@
 @implementation XMLHandler
 
 + (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML {
-    NSLog(@"dictionaryForFolderXML callde");
+    NSLog(@"dictionaryForFolderXML called");
     
     GDataXMLElement *folderIDXML = [[folderXML elementsForName:@"t:FolderId"] objectAtIndex:0];
     NSString *folderID = [[folderIDXML attributeForName:@"Id"] stringValue];
@@ -87,15 +87,14 @@
 }
 
 + (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
-    NSString *string = [NSString stringWithFormat:@"<?xmlversion=\"1.0\"encoding=\"utf-8\"?>\
-                        <soap:Envelope\
-                        xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <soap:Body>\
                         <GetFolder xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
-                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <FolderShape>\
-                        <t:BaseShape>Default</t:BaseShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
                         </FolderShape>\
                         <FolderIds>\
                         <t:FolderId Id=\"%@\"/>\

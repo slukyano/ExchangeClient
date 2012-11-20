@@ -61,7 +61,7 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestSyncItemsInFolderWithID:folderID]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestGetFolderWithID:folderID]];
 }
 
 - (void) getItemWithID:(NSString *)itemID {
@@ -124,7 +124,6 @@ typedef enum {
     if ([getFolderResponseCode isEqualToString:@"NoError"]) {
         switch (_currentOperation) {
             case ServerWhispererCurrentOperationGetFolder: {
-                //NSError *error = NSError er
                 GDataXMLElement *folderXML = [[response nodesForXPath:@"//t:Folder"
                                                            namespaces:namespaces
                                                                 error:nil] objectAtIndex:0];

@@ -36,7 +36,7 @@
                                                                              withUserName:@"sed2"
                                                                              withPassword:@"P@ssw0rd"
                                                                              withDelegate:self];
-    [serverWhispererInstance getItemsInFoldeWithID:@"AQARAFNlZDIuU0BkaWdkZXMuY29tAC4AAANvsXZIZ2YyQ4VAEcxhOByKAQDpI9KbK3FRSZQ8b3fY1VizAAABsPDVAAAA"];
+    [serverWhispererInstance getFolderWithID:@"AQARAFNlZDIuU0BkaWdkZXMuY29tAC4AAANvsXZIZ2YyQ4VAEcxhOByKAQDpI9KbK3FRSZQ8b3fY1VizAAABsPDVAAAA"];
     
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
