@@ -19,10 +19,10 @@
 @property (nonatomic, assign) id<ServerWhispererDelegate> delegate;
 
 // Предполагается, что инициализирует его LoginViewController, и он же назначит делегатом TableViewController'а. Можно и по другому, на работу не влияет.
-- (id) initWithServerURL:(NSURL *)server withUserName:(NSString *)userName withPassword:(NSString *)password;
+- (id) initWithServerURL:(NSURL *)serverURL withUserName:(NSString *)userName withPassword:(NSString *)password withDelegate:(id<ServerWhispererDelegate>)delegate;
 - (void) getFolderWithID:(NSString *)folderID;
 - (void) getItemWithID:(NSString *)itemID;
-- (NSArray *) getItemsInFoldeWithID:(NSString *)folderID;
+- (void) getItemsInFoldeWithID:(NSString *)folderID;
 - (void) getFolderHierarchy;
 
 @end

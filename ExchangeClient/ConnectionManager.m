@@ -23,6 +23,7 @@
 
 - (void) dealloc {
     [_credential release];
+    [_recievedData release];
     
     [super dealloc];
 }
@@ -39,12 +40,16 @@
 // Отправка xml-запроса
 - (void) sendRequestToServer:(NSURL *)serverURL withCredential:(NSURLCredential *)credential withBody:(NSData *)bodyData
 {
-    _credential = credential;
+    NSLog(@"sendRequest called");
+    
+    _credential = [credential retain];
+    
+    _recievedData = [[NSMutableData alloc] init];
     
     NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:serverURL];
     
     [request setHTTPMethod:@"POST"];
-    [request setValue:@"application/xml; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
+    [request setValue:@"text/xml; charset=utf-8" forHTTPHeaderField:@"Content-Type"];
     [request setHTTPBody:bodyData];
     
     NSURLConnection *connection = [NSURLConnection connectionWithRequest:request delegate:self];
@@ -55,6 +60,8 @@
 // Методы NSURLConnectionDelegate
 - (void) connection:(NSURLConnection *)connection didReceiveAuthenticationChallenge:(NSURLAuthenticationChallenge *)challenge
 {
+    NSLog(@"authentification challenge recieved");
+    
     [[challenge sender] useCredential:_credential forAuthenticationChallenge:challenge];
 }
 
@@ -68,17 +75,22 @@
 }
 
 - (void) connection:(NSURLConnection *)connection didRecieveResponse:(NSURLResponse *) response {
+    NSLog(@"Response recieved");
+    
     [_recievedData setLength:0];
 }
 
 - (void) connection:(NSURLConnection *)connection didReceiveData:(NSData *)data {
+    NSLog(@"data recived");
+    
     [_recievedData appendData:data];
 }
 
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
+    NSLog(@"connection did finish loading");
+    
     [self.delegate connectionManager:self didFinishLoadingData:_recievedData];
     
-    [_recievedData release];
     _recievedData = nil;
 }
 

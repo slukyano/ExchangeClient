@@ -10,6 +10,7 @@
 #import "GDataXMLNode.h"
 #import "ConnectionManager.h"
 #import "Defines.h"
+#import "XMLHandler.h"
 
 typedef enum {
     ServerWhispererCurrentOperationGetFolder,
@@ -60,7 +61,7 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestSyncItemsInFolderWithID:folderID]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestSyncItemsInFolderWithID:folderID]];
 }
 
 - (void) getItemWithID:(NSString *)itemID {
@@ -72,11 +73,11 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetItemWithID:itemID]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestGetItemWithID:itemID]];
 }
 
 - (void) getItemsInFoldeWithID:(NSString *)folderID {
-    _currentOperation = ServerWhispererCurrentOperationGetItem;
+    _currentOperation = ServerWhispererCurrentOperationSyncFolderItems;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
                                                              password:self.password
@@ -84,11 +85,13 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestGetItemWithID:folderID]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestGetItemWithID:folderID]];
 }
 
 - (void) getFolderHierarchy {
-    _currentOperation = ServerWhispererCurrentOperationGetItem;
+    NSLog(@"getFolderHierarchy called");
+    
+    _currentOperation = ServerWhispererCurrentOperationSyncFolderHierarchy;
     
     NSURLCredential *credential = [NSURLCredential credentialWithUser:self.userName
                                                              password:self.password
@@ -96,230 +99,90 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[self XMLRequestSyncFolderHierarchy]];
-}
-
-- (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
-    NSString *string = [NSString stringWithFormat:@"<?xmlversion=\"1.0\"encoding=\"utf-8\"?>\
-                        <soap:Envelope\
-                        xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-                        <soap:Body>\
-                        <GetFolder xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
-                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-                        <FolderShape>\
-                        <t:BaseShape>Default</t:BaseShape>\
-                        </FolderShape>\
-                        <FolderIds>\
-                        <t:FolderId Id=\"%@\"/>\
-                        </FolderIds>\
-                        </GetFolder>\
-                        </soap:Body>\
-                        </soap:Envelope>", folderID];
-    
-    return [string dataUsingEncoding:NSUTF8StringEncoding];
-}
-
-- (NSData *) XMLRequestGetItemWithID:(NSString *)itemID {
-    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
-                        <soap:Envelope\
-                        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
-                        xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\"\
-                        xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-                        <soap:Body>\
-                        <GetItem\
-                        xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
-                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-                        <ItemShape>\
-                        <t:BaseShape>AllProperties</t:BaseShape>\
-                        <t:IncludeMimeContent>true</t:IncludeMimeContent>\
-                        </ItemShape>\
-                        <ItemIds>\
-                        <t:ItemId Id=\"%@\"/>\
-                        </ItemIds>\
-                        </GetItem>\
-                        </soap:Body>\
-                        </soap:Envelope>", itemID];
-    
-    return [string dataUsingEncoding:NSUTF8StringEncoding];
-}
-
-- (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID {
-    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
-                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-                        <soap:Body>\
-                        <SyncFolderItems xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
-                        <ItemShape>\
-                        <t:BaseShape>AllProperties</t:BaseShape>\
-                        </ItemShape>\
-                        <SyncFolderId>\
-                        <t:FolderId Id=\"%@\"/>\
-                        </SyncFolderId>\
-                        <Ignore>\
-                        </Ignore>\
-                        <MaxChangesReturned>100</MaxChangesReturned>\
-                        </SyncFolderItems>\
-                        </soap:Body>\
-                        </soap:Envelope>", folderID];
-    
-    return [string dataUsingEncoding:NSUTF8StringEncoding];
-}
-
-- (NSData *) XMLRequestSyncFolderHierarchy {
-    NSString *string = @"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
-                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-                        <soap:Body>\
-                        <SyncFolderHierarchy  xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
-                        <FolderShape>\
-                        <t:BaseShape>AllProperties</t:BaseShape>\
-                        </FolderShape>\
-                        <SyncState>H4sIA=</SyncState>\
-                        </SyncFolderHierarchy>\
-                        </soap:Body>\
-                        </soap:Envelope>";
-    
-    return [string dataUsingEncoding:NSUTF8StringEncoding];
-}
-
-- (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML {
-    GDataXMLElement *folderIDXML = [[folderXML elementsForName:@"t:FolderId"] objectAtIndex:0];
-    NSString *folderID = [[folderIDXML attributeForName:@"Id"] stringValue];
-    NSString *folderIDChangeKey = [[folderIDXML attributeForName:@"ChangeKey"] stringValue];
-    
-    GDataXMLElement *parentFolderIDXML = [[folderXML elementsForName:@"t:ParentFolderId"] objectAtIndex:0];
-    NSString *parentFolderID = [[parentFolderIDXML attributeForName:@"Id"] stringValue];
-    NSString *parentFolderIDChangeKey = [[parentFolderIDXML attributeForName:@"ChangeKey"] stringValue];
-    
-    NSString *displayName = [[[folderXML elementsForName:@"t:DisplayName"] objectAtIndex:0] stringValue];
-    
-    NSString *totalCount = [[[folderXML elementsForName:@"t:TotalCount"] objectAtIndex:0] stringValue];
-    
-    NSString *unreadCount = [[[folderXML elementsForName:@"t:UnreadCount"] objectAtIndex:0] stringValue];
-    
-    return [NSDictionary dictionaryWithObjectsAndKeys:folderID, @"FolderID",
-            folderIDChangeKey, @"FolderIDChangeKey",
-            parentFolderID, @"ParentFolderID",
-            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
-            displayName, @"DisplayName",
-            totalCount, @"TotalCount",
-            unreadCount, @"UnreadCount", nil];
-}
-
-- (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
-    GDataXMLElement *itemIDXML = [[messageXML elementsForName:@"t:ItemId"] objectAtIndex:0];
-    NSString *itemID = [[itemIDXML attributeForName:@"Id"] stringValue];
-    NSString *itemIDChangeKey = [[itemIDXML attributeForName:@"ChangeKey"] stringValue];
-    
-    GDataXMLElement *parentFolderIDXML = [[messageXML elementsForName:@"t:ParentFolderId"] objectAtIndex:0];
-    NSString *parentFolderID = [[parentFolderIDXML attributeForName:@"Id"] stringValue];
-    NSString *parentFolderIDChangeKey = [[parentFolderIDXML attributeForName:@"ChangeKey"] stringValue];
-    
-    NSString *subject = [[[messageXML elementsForName:@"t:Subject"] objectAtIndex:0] stringValue];
-    
-    GDataXMLElement *bodyXML = [[messageXML elementsForName:@"t:Body"] objectAtIndex:0];
-    NSString *body = [bodyXML stringValue];
-    NSString *bodyTypeString = [[bodyXML attributeForName:@"BodyType"] stringValue];
-    NSUInteger bodyType = [bodyTypeString isEqualToString:@"HTML"] ? EMailContentTypeHTML : EMailContentTypePlainText;
-    
-    NSArray *recipientsXML = [messageXML nodesForXPath:@"//t:ToRecipients/t:Mailbox" error:nil];
-    NSMutableArray *recipients = [NSMutableArray array];
-    for (GDataXMLElement *singleRecipientXML in recipientsXML) {
-        NSString *name = [[[singleRecipientXML elementsForName:@"t:Name"] objectAtIndex:0] stringValue];
-        NSString *email = [[[singleRecipientXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
-        
-        [recipients addObject:[NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", email, @"EmailAddress", nil]];
-    }
-    
-    GDataXMLElement *senderXML = [[messageXML nodesForXPath:@"//t:From" error:nil] objectAtIndex:0];
-    NSString *senderName = [[[senderXML nodesForXPath:@"//t:Name" error:nil] objectAtIndex:0] stringValue];
-    NSString *senderEMail = [[[senderXML nodesForXPath:@"//t:EmailAddress" error:nil] objectAtIndex:0] stringValue];
-    NSDictionary *sender = [NSDictionary dictionaryWithObjectsAndKeys:senderName, @"Name", senderEMail, @"EmailAddress", nil];
-    
-    return [NSDictionary dictionaryWithObjectsAndKeys:itemID, @"ItemID",
-            itemIDChangeKey, @"ItemIDChangeKey",
-            parentFolderID, @"ParentFolderID",
-            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
-            subject, @"Subject",
-            body, @"Body",
-            bodyType, @"BodyType",
-            recipients, @"Recipients",
-            sender, @"From", nil];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestSyncFolderHierarchy]];
 }
 
 - (void) connectionManager:(ConnectionManager *)manager didFinishLoadingData:(NSData *)data {
-    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:data options:nil error:nil];
+    NSLog(@"didFinishLoadingData starts");
+    
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:data options:0 error:nil];
     
     // Вывод ответа сервера. Не забыть выкинуть к релизу
     NSString *debugString = [NSString stringWithUTF8String:[data bytes]];
     NSLog(@"%@", debugString);
     
-    switch (_currentOperation) {
-        case ServerWhispererCurrentOperationGetFolder: {
-            NSString *getFolderResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
-            if ([getFolderResponseCode isEqualToString:@"NoError"]) {
-                GDataXMLElement *folderXML = [[response nodesForXPath:@"//t:Folder" error:nil] objectAtIndex:0];
-                
-                 [self.delegate serverWhisperer:self
-                         didFinishLoadingFolder:[self dictionaryForFolderXML:folderXML]];
-            }
-            else
-                NSLog(@"Error response");
-            break;
-        }
-            
-        case ServerWhispererCurrentOperationGetItem: {
-            NSString *getItemResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
-            if ([getItemResponseCode isEqualToString:@"NoError"]) {
-                GDataXMLElement *messageXML = [[response nodesForXPath:@"//t:Message" error:nil] objectAtIndex:0];
+    NSDictionary *namespaces = [NSDictionary dictionaryWithObjectsAndKeys:
+                                @"http://schemas.microsoft.com/exchange/services/2006/messages", @"m",
+                                @"http://schemas.microsoft.com/exchange/services/2006/types", @"t",
+                                @"http://www.w3.org/2001/XMLSchema-instance", @"xsi",
+                                @"http://www.w3.org/2001/XMLSchema", @"xsd",
+                                @"http://schemas.xmlsoap.org/soap/envelope/", @"s", nil];
+    NSLog(@"%@", namespaces);
+    
+    NSString *getFolderResponseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                                     namespaces:namespaces
+                                                          error:nil] objectAtIndex:0] stringValue];
+    if ([getFolderResponseCode isEqualToString:@"NoError"]) {
+        switch (_currentOperation) {
+            case ServerWhispererCurrentOperationGetFolder: {
+                //NSError *error = NSError er
+                GDataXMLElement *folderXML = [[response nodesForXPath:@"//t:Folder"
+                                                           namespaces:namespaces
+                                                                error:nil] objectAtIndex:0];
                 
                 [self.delegate serverWhisperer:self
-                       didFinishLoadingMessage:[self dictionaryForMessageXML:messageXML]];
+                        didFinishLoadingFolder:[XMLHandler dictionaryForFolderXML:folderXML]];
+                break;
             }
-            else
-                NSLog(@"Error response");
-            break;
-        }
-            
-        case ServerWhispererCurrentOperationSyncFolderItems: {
-            NSString *getItemResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
-            if ([getItemResponseCode isEqualToString:@"NoError"]) {
+                
+            case ServerWhispererCurrentOperationGetItem: {
+                GDataXMLElement *messageXML = [[response nodesForXPath:@"//t:Message"
+                                                            namespaces:namespaces
+                                                                 error:nil] objectAtIndex:0];
+                
+                [self.delegate serverWhisperer:self
+                       didFinishLoadingMessage:[XMLHandler dictionaryForMessageXML:messageXML]];
+                break;
+            }
+                
+            case ServerWhispererCurrentOperationSyncFolderItems: {
                 NSMutableArray *result = [NSMutableArray array];
                 
-                NSArray *messages = [response nodesForXPath:@"//t:Message" error:nil];
+                NSArray *messages = [response nodesForXPath:@"//t:Message"
+                                                      namespaces:namespaces
+                                                      error:nil];
                 for (GDataXMLElement *currentMessage in messages) {
-                    [result addObject:[self dictionaryForMessageXML:currentMessage]];
+                    [result addObject:[XMLHandler dictionaryForMessageXML:currentMessage]];
                 }
                 
                 [self.delegate serverWhisperer:self didFinishLoadingItems:result];
+                break;
             }
-            else
-                NSLog(@"Error response");
-            break;
-        }
-        case ServerWhispererCurrentOperationSyncFolderHierarchy: {
-            NSString *getItemResponseCode = [[[response nodesForXPath:@"//m:ResponseCode" error:nil] objectAtIndex:0] stringValue];
-            if ([getItemResponseCode isEqualToString:@"NoError"]) {
+            case ServerWhispererCurrentOperationSyncFolderHierarchy: {
                 NSMutableArray *result = [NSMutableArray array];
                 
-                NSArray *folders = [response nodesForXPath:@"//t:Folder" error:nil];
+                NSArray *folders = [response nodesForXPath:@"//t:Folder"
+                                                namespaces:namespaces
+                                                     error:nil];
                 for (GDataXMLElement *currentFolder in folders) {
-                    [result addObject:[self dictionaryForFolderXML:currentFolder]];
+                    [result addObject:[XMLHandler dictionaryForFolderXML:currentFolder]];
                 }
                 
                 [self.delegate serverWhisperer:self didFinishLoadingFolderHierarchy:result];
+                break;
             }
-            else
-                NSLog(@"Error response");
-            break;
-        }
             
-        default:
-            break;
+            default:
+                break;
+        }
     }
-
+    else {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+    }
+    
     [manager release];
     [response release];
 }
