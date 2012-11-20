@@ -55,7 +55,7 @@
  Name
  EmailAddress
  */
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)folder;
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)message;
 
 // Передает массив словарей, как в getItemWithID
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolderHierarchy:(NSArray *)hierarchy;

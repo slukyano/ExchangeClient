@@ -13,6 +13,8 @@
 @implementation XMLHandler
 
 + (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML {
+    NSLog(@"dictionaryForFolderXML callde");
+    
     GDataXMLElement *folderIDXML = [[folderXML elementsForName:@"t:FolderId"] objectAtIndex:0];
     NSString *folderID = [[folderIDXML attributeForName:@"Id"] stringValue];
     NSString *folderIDChangeKey = [[folderIDXML attributeForName:@"ChangeKey"] stringValue];
@@ -37,6 +39,8 @@
 }
 
 + (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML {
+    NSLog(@"dictionaryForMailboxXML called");
+    
     NSString *name = [[[mailboxXML elementsForName:@"t:Name"] objectAtIndex:0] stringValue];
     NSString *email = [[[mailboxXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
     
@@ -44,6 +48,8 @@
 }
 
 + (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
+    NSLog(@"dictionaryForMessageXML called");
+    
     GDataXMLElement *itemIDXML = [[messageXML elementsForName:@"t:ItemId"] objectAtIndex:0];
     NSString *itemID = [[itemIDXML attributeForName:@"Id"] stringValue];
     NSString *itemIDChangeKey = [[itemIDXML attributeForName:@"ChangeKey"] stringValue];

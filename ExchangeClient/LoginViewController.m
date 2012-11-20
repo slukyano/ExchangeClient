@@ -36,7 +36,7 @@
                                                                              withUserName:@"sed2"
                                                                              withPassword:@"P@ssw0rd"
                                                                              withDelegate:self];
-    [serverWhispererInstance getFolderHierarchy];
+    [serverWhispererInstance getItemsInFoldeWithID:@"AQARAFNlZDIuU0BkaWdkZXMuY29tAC4AAANvsXZIZ2YyQ4VAEcxhOByKAQDpI9KbK3FRSZQ8b3fY1VizAAABsPDVAAAA"];
     
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
@@ -68,15 +68,15 @@
 }
 
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder {
-    
+    NSLog(@"%@", folder);
 };
 
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItems:(NSArray *)items {
-    
+    NSLog(@"%@", items);
 }
 
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)folder {
-    
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)message {
+    NSLog(@"%@", message);
 }
 
 @end

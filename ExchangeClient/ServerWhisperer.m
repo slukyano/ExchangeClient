@@ -85,7 +85,7 @@ typedef enum {
     
     ConnectionManager *connection = [[ConnectionManager alloc] initWithDelegate:self];
     
-    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestGetItemWithID:folderID]];
+    [connection sendRequestToServer:_serverURL withCredential:credential withBody:[XMLHandler XMLRequestSyncItemsInFolderWithID:folderID]];
 }
 
 - (void) getFolderHierarchy {
@@ -117,7 +117,6 @@ typedef enum {
                                 @"http://www.w3.org/2001/XMLSchema-instance", @"xsi",
                                 @"http://www.w3.org/2001/XMLSchema", @"xsd",
                                 @"http://schemas.xmlsoap.org/soap/envelope/", @"s", nil];
-    NSLog(@"%@", namespaces);
     
     NSString *getFolderResponseCode = [[[response nodesForXPath:@"//m:ResponseCode"
                                                      namespaces:namespaces

@@ -4,15 +4,15 @@
    version = "1.0">
    <FileBreakpoints>
       <FileBreakpoint
-         shouldBeEnabled = "Yes"
+         shouldBeEnabled = "No"
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "ExchangeClient/ServerWhisperer.m"
-         timestampString = "375124362.239954"
+         timestampString = "375125956.952659"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "125"
-         endingLineNumber = "125"
+         startingLineNumber = "124"
+         endingLineNumber = "124"
          landmarkName = "-connectionManager:didFinishLoadingData:"
          landmarkType = "5">
       </FileBreakpoint>
@@ -21,12 +21,25 @@
          ignoreCount = "0"
          continueAfterRunningActions = "No"
          filePath = "ExchangeClient/ServerWhisperer.m"
-         timestampString = "375124362.239954"
+         timestampString = "375125956.952659"
          startingColumnNumber = "9223372036854775807"
          endingColumnNumber = "9223372036854775807"
-         startingLineNumber = "122"
-         endingLineNumber = "122"
+         startingLineNumber = "121"
+         endingLineNumber = "121"
          landmarkName = "-connectionManager:didFinishLoadingData:"
+         landmarkType = "5">
+      </FileBreakpoint>
+      <FileBreakpoint
+         shouldBeEnabled = "Yes"
+         ignoreCount = "0"
+         continueAfterRunningActions = "No"
+         filePath = "ExchangeClient/LoginViewController.m"
+         timestampString = "375126392.104984"
+         startingColumnNumber = "9223372036854775807"
+         endingColumnNumber = "9223372036854775807"
+         startingLineNumber = "74"
+         endingLineNumber = "74"
+         landmarkName = "-serverWhisperer:didFinishLoadingItems:"
          landmarkType = "5">
       </FileBreakpoint>
    </FileBreakpoints>
