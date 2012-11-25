@@ -11,10 +11,18 @@
 
 @interface XMLHandler : NSObject
 
+// Генерация запросов
 + (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID;
++ (NSData *) XMLRequestGetFolderWithDistinguishedID:(NSString *)distinguishedFolderId;
 + (NSData *) XMLRequestGetItemWithID:(NSString *)itemID;
-+ (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID;
-+ (NSData *) XMLRequestSyncFolderHierarchy;
++ (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
++ (NSData *) XMLRequestSyncFolderHierarchyUsingSyncState:(NSString *)syncState;
++ (NSData *) XMLRequestFindFoldersInFolderWithID:(NSString *)folderID;
++ (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
++ (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID;
++ (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+
+// Обработка ответов
 + (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML;
 + (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML;
 + (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML;

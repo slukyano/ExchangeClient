@@ -20,16 +20,27 @@
 
 // Предполагается, что инициализирует его LoginViewController, и он же назначит делегатом TableViewController'а. Можно и по другому, на работу не влияет.
 - (id) initWithServerURL:(NSURL *)serverURL withUserName:(NSString *)userName withPassword:(NSString *)password withDelegate:(id<ServerWhispererDelegate>)delegate;
+// Получения свойств папки
 - (void) getFolderWithID:(NSString *)folderID;
+- (void) getFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+// Получение свойств элемента
 - (void) getItemWithID:(NSString *)itemID;
-- (void) getItemsInFoldeWithID:(NSString *)folderID;
-- (void) getFolderHierarchy;
+// Получение изменений содержимого папки
+- (void) syncItemsInFoldeWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
+// Получение изменений дерева папок
+- (void) syncFolderHierarchyUsingSyncState:(NSString *)syncState;
+// Получение дочерних папок (только первый уровень вложенности) указанной папки
+- (void) getFoldersInFolderWithID:(NSString *)folderID;
+- (void) getFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+// Получение содержимого папки
+- (void) getItemsInFolderWithID:(NSString *)folderID;
+- (void) getItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 
 @end
 
 @protocol ServerWhispererDelegate <NSObject>
 
-/* Метод передает словарь для папки. Ключи (Все ключи и значения - NSString):
+/* Метод передает словарь папки. Ключи (Все ключи и значения - NSString):
  FolderID - по нему и нужно делать запрос
  FolderIDChangeKey - пока не используем
  ParentFolderID
@@ -40,7 +51,7 @@
  */
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder;
 
-/* Метод передает словарь для письма. Ключи (Все ключи - NSString, все значения, кроме BodyType, Recipients и From - NSString):
+/* Метод передает словарь письма. Ключи (Все ключи - NSString, все значения, кроме BodyType, Recipients и From - NSString):
  ItemID - по нему и нужно делать запрос
  ItemIDChangeKey - пока не используем
  ParentFolderID
@@ -58,9 +69,15 @@
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)message;
 
 // Передает массив словарей, как в getItemWithID
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolderHierarchy:(NSArray *)hierarchy;
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolders:(NSArray *)folders;
 
 // Передает массив словарей, как в getFolderWithID
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItems:(NSArray *)items;
+
+// Передает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей писем.
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItemsToSync:(NSDictionary *)itemsToSync;
+
+// Передает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей папок.
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFoldersToSync:(NSDictionary *)foldersToSync;
 
 @end

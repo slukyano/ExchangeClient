@@ -36,7 +36,7 @@
                                                                              withUserName:@"sed2"
                                                                              withPassword:@"P@ssw0rd"
                                                                              withDelegate:self];
-    [serverWhispererInstance getFolderWithID:@"AQARAFNlZDIuU0BkaWdkZXMuY29tAC4AAANvsXZIZ2YyQ4VAEcxhOByKAQDpI9KbK3FRSZQ8b3fY1VizAAABsPDVAAAA"];
+    [serverWhispererInstance syncFolderHierarchyUsingSyncState:nil];
     
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
@@ -65,6 +65,11 @@
 
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolderHierarchy:(NSArray *)hierarchy{
     NSLog(@"%@",hierarchy);
+    
+    for (NSDictionary *dict in hierarchy) {
+        if ([[dict objectForKey:@"ParentFolderID"] isEqualToString:@"AQARAFNlZDIuU0BkaWdkZXMuY29tAC4AAANvsXZIZ2YyQ4VAEcxhOByKAQDpI9KbK3FRSZQ8b3fY1VizAAABsIIyAAAA"])
+            NSLog(@"%@", [dict objectForKey:@"DisplayName"]);
+    }
 }
 
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder {

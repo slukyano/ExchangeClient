@@ -12,6 +12,8 @@
 
 @implementation XMLHandler
 
+// Обработка ответов
+
 + (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML {
     NSLog(@"dictionaryForFolderXML called");
     
@@ -86,6 +88,8 @@
             sender, @"From", nil];
 }
 
+// Генерация запросов
+
 + (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
@@ -102,6 +106,26 @@
                         </GetFolder>\
                         </soap:Body>\
                         </soap:Envelope>", folderID];
+    
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSData *) XMLRequestGetFolderWithDistinguishedID:(NSString *)distinguishedFolderId {
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <GetFolder xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <FolderShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
+                        </FolderShape>\
+                        <FolderIds>\
+                        <t:DistinguishedFolderId Id=\"%@\"/>\
+                        </FolderIds>\
+                        </GetFolder>\
+                        </soap:Body>\
+                        </soap:Envelope>", distinguishedFolderId];
     
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
@@ -131,7 +155,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID {
++ (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID usingSyncState:(NSString *)syncState {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
@@ -143,28 +167,110 @@
                         <SyncFolderId>\
                         <t:FolderId Id=\"%@\"/>\
                         </SyncFolderId>\
+                        <SyncState>%@</SyncState>\
                         <Ignore>\
                         </Ignore>\
                         <MaxChangesReturned>100</MaxChangesReturned>\
                         </SyncFolderItems>\
+                        </soap:Body>\
+                        </soap:Envelope>", folderID, syncState ? syncState : @""];
+    
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSData *) XMLRequestSyncFolderHierarchyUsingSyncState:(NSString *)syncState {
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <SyncFolderHierarchy  xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
+                        <FolderShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
+                        </FolderShape>\
+                        <SyncState>%@</SyncState>\
+                        </SyncFolderHierarchy>\
+                        </soap:Body>\
+                        </soap:Envelope>", syncState ? syncState : @""];
+    
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSData *) XMLRequestFindFoldersInFolderWithID:(NSString *)folderID {
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <FindFolder Traversal=\"Shallow\" xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
+                        <FolderShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
+                        </FolderShape>\
+                        <ParentFolderIds>\
+                        <t:FolderId Id=\"%@\"/>\
+                        </ParentFolderIds>\
+                        </FindFolder>\
                         </soap:Body>\
                         </soap:Envelope>", folderID];
     
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestSyncFolderHierarchy {
-    NSString *string = @"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
-    <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-    xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
-    <soap:Body>\
-    <SyncFolderHierarchy  xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
-    <FolderShape>\
-    <t:BaseShape>AllProperties</t:BaseShape>\
-    </FolderShape>\
-    </SyncFolderHierarchy>\
-    </soap:Body>\
-    </soap:Envelope>";
++ (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID {
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <FindFolder Traversal=\"Shallow\" xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
+                        <FolderShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
+                        </FolderShape>\
+                        <ParentFolderIds>\
+                        <t:DistinguishedFolderId Id=\"%@\"/>\
+                        </ParentFolderIds>\
+                        </FindFolder>\
+                        </soap:Body>\
+                        </soap:Envelope>", distinguishedFolderID];
+    
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID {
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <FindItem xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+                        Traversal=\"Shallow\">\
+                        <ItemShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
+                        </ItemShape>\
+                        <ParentFolderIds>\
+                        <t:FolderId Id=\"%@\"/>\
+                        </ParentFolderIds>\
+                        </FindItem>\
+                        </soap:Body>\
+                        </soap:Envelope>", folderID];
+    
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
++ (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID {
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <FindItem xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
+                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+                        Traversal=\"Shallow\">\
+                        <ItemShape>\
+                        <t:BaseShape>AllProperties</t:BaseShape>\
+                        </ItemShape>\
+                        <ParentFolderIds>\
+                        <t:DistinguishedFolderId Id=\"%@\"/>\
+                        </ParentFolderIds>\
+                        </FindItem>\
+                        </soap:Body>\
+                        </soap:Envelope>", distinguishedFolderID];
     
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
