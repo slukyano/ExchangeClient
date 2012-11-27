@@ -13,5 +13,4 @@
 
 
 - (IBAction)loginButton:(id)sender;
-- (IBAction)exitButton:(id)sender;
 @end
