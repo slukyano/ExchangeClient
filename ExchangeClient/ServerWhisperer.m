@@ -191,7 +191,7 @@ typedef enum {
                 
                 NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:messagesToCreate, @"Create",
                                         messagesToUpdate, @"Update",
-                                        messagesToDelete, @"Delete" nil];
+                                        messagesToDelete, @"Delete", nil];
                 [self.delegate serverWhisperer:self didFinishLoadingItemsToSync:result];
                 break;
             }

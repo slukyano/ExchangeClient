@@ -20,6 +20,14 @@
 {
     self.window.rootViewController = self.navigationController;
     [self.window makeKeyAndVisible];
+    
+    NSMutableDictionary *defaultDict = [NSMutableDictionary
+                                        dictionaryWithObject:[NSNumber numberWithBool:NO] forKey:@"logged"];
+    [defaultDict setObject:@"" forKey:@"address"];
+    [defaultDict setObject:@"" forKey:@"name"];
+    [defaultDict setObject:@"" forKey:@"password"];
+    
+    [[NSUserDefaults standardUserDefaults] registerDefaults:defaultDict];
 
     return YES;
 }

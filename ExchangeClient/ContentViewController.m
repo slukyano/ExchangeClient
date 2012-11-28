@@ -7,33 +7,52 @@
 //
 
 #import "ContentViewController.h"
+#import "Defines.h"
 
 @interface ContentViewController ()
-
+{
+    NSDictionary *mail;
+}
 @end
 
 @implementation ContentViewController
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil message:(NSDictionary*)message
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
-        // Custom initialization
+        mail = message;
     }
     return self;
 }
 
 - (void)viewDidLoad
 {
-    if (YES) {
+    if ([mail valueForKey:@"BodyType"] == EMailContentTypePlainText) {
         UITextView *textView = [[UITextView alloc] initWithFrame:self.view.frame];
-        textView.text = @"Text";
+        textView.text = [mail valueForKey:@"Body"];
         [self.view addSubview:textView];
     } else {
         UIWebView *webView = [[UIWebView alloc] initWithFrame:self.view.frame];
         [self.view addSubview:webView];
     }
+    UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
+                               initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+                               target:self
+                               action:@selector(cancelButton)] autorelease];
+    self.navigationItem.rightBarButtonItem = cancel;
     [super viewDidLoad];
+}
+
+- (void) cancelButton {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:NO forKey:@"logged"];
+    [defaults setObject:@"" forKey:@"address"];
+    [defaults setObject:@"" forKey:@"name"];
+    [defaults setObject:@"" forKey:@"password"];
+    [defaults synchronize];
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    
 }
 
 - (void)didReceiveMemoryWarning

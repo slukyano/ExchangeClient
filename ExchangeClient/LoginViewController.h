@@ -7,7 +7,9 @@
 //
 
 #import <UIKit/UIKit.h>
-@interface LoginViewController : UIViewController
+#import "ServerWhisperer.h"
+
+@interface LoginViewController : UIViewController <ServerWhispererDelegate>
 
 
 - (IBAction)loginButton:(id)sender;

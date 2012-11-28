@@ -9,5 +9,5 @@
 #import <UIKit/UIKit.h>
 
 @interface ContentViewController : UIViewController
-
+- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil message:(NSDictionary*)message;
 @end

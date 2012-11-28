@@ -8,7 +8,11 @@
 
 #import "TableViewController.h"
 #import "ContentViewController.h"
-@interface TableViewController ()
+#import "ExchangeClientDataSingleton.h"
+@interface TableViewController () {
+    NSString *currentFolderID;
+    NSMutableArray *itemsInCurrentFolder;
+}
 @end
 
 @implementation TableViewController
@@ -24,6 +28,15 @@
 
 - (void)viewDidLoad
 {
+    currentFolderID = @"111";
+    itemsInCurrentFolder = [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
+    
+    UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
+                               initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
+                               target:self
+                               action:@selector(cancelButton)] autorelease];
+    self.navigationItem.rightBarButtonItem = cancel;
+    
     [super viewDidLoad];
 
     // Uncomment the following line to preserve selection between presentations.
@@ -31,6 +44,17 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+}
+
+- (void) cancelButton {
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults setBool:NO forKey:@"logged"];
+    [defaults setObject:@"" forKey:@"address"];
+    [defaults setObject:@"" forKey:@"name"];
+    [defaults setObject:@"" forKey:@"password"];
+    [defaults synchronize];
+    [self.navigationController popToRootViewControllerAnimated:YES];
+    
 }
 
 - (void)didReceiveMemoryWarning
@@ -49,8 +73,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    // Return the number of rows in the section.
-    return 10;
+    return [itemsInCurrentFolder count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -60,8 +83,12 @@
     if (cell == nil) {
         cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
     }
+    if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Type"] == @"Folder") {
+        cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"];
+    } else {
+        cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Subject"];
+    }
     
-    cell.textLabel.text = @"Text";
     
     return cell;
 }
@@ -109,9 +136,21 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    ContentViewController *contentViewController = [[ContentViewController alloc] init];
-    [self.navigationController pushViewController:contentViewController animated:YES];
-    [contentViewController release];
+    if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Type"] == @"Folder") {
+        
+        if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...") {
+            currentFolderID = [[ExchangeClientDataSingleton instance] ParentIDForFolderWithID:currentFolderID];
+        } else {
+            currentFolderID = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"FolderID"];
+        }
+        itemsInCurrentFolder = [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
+        [self.tableView reloadData];
+    } else {
+        ContentViewController *contentViewController = [[ContentViewController alloc] initWithNibName:nil bundle:nil message:[itemsInCurrentFolder objectAtIndex:indexPath.row]];
+        [self.navigationController pushViewController:contentViewController animated:YES];
+        [contentViewController release];
+    }
+    
 }
 
 @end

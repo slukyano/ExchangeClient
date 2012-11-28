@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		C318073316502F4F00F87853 /* ContentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C318073216502F4F00F87853 /* ContentViewController.m */; };
+		C3B2C7C31663267E00C6224C /* ExchangeClientDataSingleton.m in Sources */ = {isa = PBXBuildFile; fileRef = C3B2C7C21663267E00C6224C /* ExchangeClientDataSingleton.m */; };
 		C3CB567C16501F3C002E75B2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3CB567B16501F3C002E75B2 /* UIKit.framework */; };
 		C3CB567E16501F3C002E75B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3CB567D16501F3C002E75B2 /* Foundation.framework */; };
 		C3CB568016501F3C002E75B2 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3CB567F16501F3C002E75B2 /* CoreGraphics.framework */; };
@@ -32,6 +33,8 @@
 /* Begin PBXFileReference section */
 		C318073116502F4F00F87853 /* ContentViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContentViewController.h; sourceTree = "<group>"; };
 		C318073216502F4F00F87853 /* ContentViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContentViewController.m; sourceTree = "<group>"; };
+		C3B2C7C11663267E00C6224C /* ExchangeClientDataSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExchangeClientDataSingleton.h; sourceTree = "<group>"; };
+		C3B2C7C21663267E00C6224C /* ExchangeClientDataSingleton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExchangeClientDataSingleton.m; sourceTree = "<group>"; };
 		C3CB567716501F3C002E75B2 /* ExchangeClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExchangeClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C3CB567B16501F3C002E75B2 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		C3CB567D16501F3C002E75B2 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -166,6 +169,8 @@
 				CE7681FB16530C15009EE5E4 /* ConnectionManager.m */,
 				CEB11AC71655782300D862E6 /* ServerWhisperer.h */,
 				CEB11AC81655782300D862E6 /* ServerWhisperer.m */,
+				C3B2C7C11663267E00C6224C /* ExchangeClientDataSingleton.h */,
+				C3B2C7C21663267E00C6224C /* ExchangeClientDataSingleton.m */,
 			);
 			name = "Connection management";
 			sourceTree = "<group>";
@@ -258,6 +263,7 @@
 				CEB11AC01654691700D862E6 /* GDataXMLNode.m in Sources */,
 				CEB11AC91655782300D862E6 /* ServerWhisperer.m in Sources */,
 				CE7EFB56165BDF320090B3C4 /* XMLHandler.m in Sources */,
+				C3B2C7C31663267E00C6224C /* ExchangeClientDataSingleton.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
