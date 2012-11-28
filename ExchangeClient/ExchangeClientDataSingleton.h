@@ -19,4 +19,7 @@
 - (void) addObject:(id)anObject;
 - (void) removeObjectAtIndex:(NSUInteger)index;
 - (void) replaceObjectAtIndex:(NSUInteger)index withObject:(id)anObject;
+
+- (NSMutableArray *) ItemsInFolderWithID:(NSString *)currentFolderID;
+- (NSString *)ParentIDForFolderWithID:(NSString *)currentFolderID;
 @end

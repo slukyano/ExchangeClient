@@ -30,7 +30,7 @@
 {
     currentFolderID = @"111";
     itemsInCurrentFolder = [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
-    
+    NSLog(@"%@",itemsInCurrentFolder);
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                                target:self

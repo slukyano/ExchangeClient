@@ -101,28 +101,31 @@
     [passwordField release];
     [super dealloc];
 }
+- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder{
+    NSLog(@"%@",folder);
+}
 
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)message{
-
+    NSLog(@"%@",message);
 }
 
 // Передает массив словарей, как в getItemWithID
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolders:(NSArray *)folders{
-
+    NSLog(@"%@",folders);
 }
 
 // Передает массив словарей, как в getFolderWithID
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItems:(NSArray *)items{
-
+    NSLog(@"%@",items);
 }
 
 // Передает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей писем.
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItemsToSync:(NSDictionary *)itemsToSync{
-
+    NSLog(@"%@",itemsToSync);
 }
 
 // Передает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей папок.
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFoldersToSync:(NSDictionary *)foldersToSync{
-
+    NSLog(@"%@",foldersToSync);
 }
 @end
