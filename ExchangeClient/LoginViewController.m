@@ -34,18 +34,13 @@
 - (void)viewDidLoad
 {
     self.title = @"Login";
-    ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc] initWithServerURL:[NSURL URLWithString:@"https://mail.digdes.com/ews/exchange.asmx"]
-                                                                             withUserName:@"sed2"
-                                                                             withPassword:@"P@ssw0rd"
-                                                                             withDelegate:self];
-    //[serverWhispererInstance syncFolderHierarchyUsingSyncState:nil];
+        
     
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
 }
 
 - (void) viewWillAppear:(BOOL)animated {
-    NSLog(@"!!!");
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults boolForKey:@"logged"]) {
         loginButton.titleLabel.text = @"Data";
@@ -67,12 +62,20 @@
 - (IBAction)loginButton:(id)sender{
     
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    
     [defaults setBool:YES forKey:@"logged"];
     [defaults setObject:addressField.text forKey:@"address"];
     [defaults setObject:nameField.text forKey:@"name"];
     [defaults setObject:passwordField.text forKey:@"password"];
     [defaults synchronize];
     
+    ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc] initWithServerURL:[NSURL URLWithString:[defaults stringForKey:@"address"]]
+                                                                             withUserName:[defaults stringForKey:@"name"]
+                                                                             withPassword:[defaults stringForKey:@"password"]
+                                                                             withDelegate:self];
+    [serverWhispererInstance syncFolderHierarchyUsingSyncState:nil];
+    
+        
     TableViewController *tableViewController = [[TableViewController alloc] initWithNibName:@"TableViewController" bundle:nil];
     [self.navigationController pushViewController:tableViewController animated:YES];
     [tableViewController release];
