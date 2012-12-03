@@ -7,40 +7,21 @@
 //
 
 #import <Foundation/Foundation.h>
-#import "ConnectionManager.h"
 
 @protocol ServerWhispererDelegate;
 
-@interface ServerWhisperer : NSObject <ConnectionManagerDelegate>
-
+@interface ServerWhisperer : NSObject
 @property (nonatomic, retain) NSURL *serverURL;
-@property (nonatomic, retain) NSString *userName;
+@property (nonatomic, retain) NSString *username;
 @property (nonatomic, retain) NSString *password;
-@property (nonatomic, assign) id<ServerWhispererDelegate> delegate;
 
-// Предполагается, что инициализирует его LoginViewController, и он же назначит делегатом TableViewController'а. Можно и по другому, на работу не влияет.
-- (id) initWithServerURL:(NSURL *)serverURL withUserName:(NSString *)userName withPassword:(NSString *)password withDelegate:(id<ServerWhispererDelegate>)delegate;
-// Получения свойств папки
-- (void) getFolderWithID:(NSString *)folderID;
-- (void) getFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
-// Получение свойств элемента
-- (void) getItemWithID:(NSString *)itemID;
-// Получение изменений содержимого папки
-- (void) syncItemsInFoldeWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
-// Получение изменений дерева папок
-- (void) syncFolderHierarchyUsingSyncState:(NSString *)syncState;
-// Получение дочерних папок (только первый уровень вложенности) указанной папки
-- (void) getFoldersInFolderWithID:(NSString *)folderID;
-- (void) getFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
-// Получение содержимого папки
-- (void) getItemsInFolderWithID:(NSString *)folderID;
-- (void) getItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+- (id) initWithServerURL:(NSURL *)serverURL withUsername:(NSString *)username withPassword:(NSString *)password;
 
-@end
-
-@protocol ServerWhispererDelegate <NSObject>
-
-/* Метод передает словарь папки. Ключи (Все ключи и значения - NSString):
+// Запрос для проверки пользовательских данных
+- (BOOL) testUserCredential;
+// Получение свойств папки
+/* Методы возвращают словарь папки. Ключи (Все ключи и значения, кроме DataType, - NSString):
+ DataType - тип объекта (ключ - NSString, значение - NSNumber, содержащий DataTypeFolder)
  FolderID - по нему и нужно делать запрос
  FolderIDChangeKey - пока не используем
  ParentFolderID
@@ -49,9 +30,12 @@
  TotalCount - число элементов в папке
  UnreadCount - число непрочитанных писем
  */
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder;
+- (NSDictionary *) getFolderWithID:(NSString *)folderID;
+- (NSDictionary *) getFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 
-/* Метод передает словарь письма. Ключи (Все ключи - NSString, все значения, кроме BodyType, Recipients и From - NSString):
+// Получение свойств элемента
+/* Метод передает словарь письма. Ключи (Все ключи - NSString, все значения, кроме DataType, BodyType, Recipients и From - NSString):
+ DataType - тип объекта (ключ - NSString, значение - NSNumber, содержащий DataTypeItem)
  ItemID - по нему и нужно делать запрос
  ItemIDChangeKey - пока не используем
  ParentFolderID
@@ -66,18 +50,24 @@
  Name
  EmailAddress
  */
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingMessage:(NSDictionary *)message;
+- (NSDictionary *) getItemWithID:(NSString *)itemID;
 
-// Передает массив словарей, как в getItemWithID
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolders:(NSArray *)folders;
+// Получение изменений содержимого папки
+// Возвращает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей писем.
+- (NSDictionary *) syncItemsInFoldeWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
 
-// Передает массив словарей, как в getFolderWithID
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItems:(NSArray *)items;
+// Получение изменений дерева папок
+// Возвращает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей папок.
+- (NSDictionary *) syncFolderHierarchyUsingSyncState:(NSString *)syncState;
 
-// Передает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей писем.
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingItemsToSync:(NSDictionary *)itemsToSync;
+// Получение дочерних папок (только первый уровень вложенности) указанной папки
+// Возвращает массив словарей, как в getFolderWithID
+- (NSArray *) getFoldersInFolderWithID:(NSString *)folderID;
+- (NSArray *) getFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 
-// Передает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей папок.
-- (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFoldersToSync:(NSDictionary *)foldersToSync;
+// Получение содержимого папки
+// Возвращает массив словарей, как в getItemWithID
+- (NSArray *) getItemsInFolderWithID:(NSString *)folderID;
+- (NSArray *) getItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 
 @end

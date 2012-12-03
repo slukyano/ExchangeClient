@@ -69,12 +69,12 @@
     [defaults setObject:passwordField.text forKey:@"password"];
     [defaults synchronize];
     
-    ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc] initWithServerURL:[NSURL URLWithString:[defaults stringForKey:@"address"]]
-                                                                             withUserName:[defaults stringForKey:@"name"]
-                                                                             withPassword:[defaults stringForKey:@"password"]
-                                                                             withDelegate:self];
-    [serverWhispererInstance syncFolderHierarchyUsingSyncState:nil];
-    
+    ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc] initWithServerURL:[NSURL URLWithString:[defaults stringForKey:@"address"]] withUsername:[defaults stringForKey:@"name"] withPassword:[defaults stringForKey:@"password"]];
+    /*ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc]
+                                                initWithServerURL:[NSURL URLWithString:@"https://mail.digdes.com/ews/exchange.asmx"]
+                                                withUsername:@"sed2"
+                                                withPassword:@"P@ssw0rd"];*/
+    NSLog(@"%@", [serverWhispererInstance testUserCredential] ? @"YES" : @"NO");
         
     TableViewController *tableViewController = [[TableViewController alloc] initWithNibName:@"TableViewController" bundle:nil];
     [self.navigationController pushViewController:tableViewController animated:YES];

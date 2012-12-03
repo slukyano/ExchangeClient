@@ -8,10 +8,10 @@
 
 #pragma once
 
-/*typedef enum {
+typedef enum {
     DataTypeFolder,
     DataTypeEMail
-} DataType;*/
+} DataType;
 
 typedef enum {
     EMailContentTypePlainText,

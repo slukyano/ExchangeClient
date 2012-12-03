@@ -12,19 +12,22 @@
 @interface XMLHandler : NSObject
 
 // Генерация запросов
-+ (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID;
-+ (NSData *) XMLRequestGetFolderWithDistinguishedID:(NSString *)distinguishedFolderId;
-+ (NSData *) XMLRequestGetItemWithID:(NSString *)itemID;
-+ (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
-+ (NSData *) XMLRequestSyncFolderHierarchyUsingSyncState:(NSString *)syncState;
-+ (NSData *) XMLRequestFindFoldersInFolderWithID:(NSString *)folderID;
-+ (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
-+ (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID;
-+ (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+- (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID;
+- (NSData *) XMLRequestGetFolderWithDistinguishedID:(NSString *)distinguishedFolderId;
+- (NSData *) XMLRequestGetItemWithID:(NSString *)itemID;
+- (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
+- (NSData *) XMLRequestSyncFolderHierarchyUsingSyncState:(NSString *)syncState;
+- (NSData *) XMLRequestFindFoldersInFolderWithID:(NSString *)folderID;
+- (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+- (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID;
+- (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 
 // Обработка ответов
-+ (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML;
-+ (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML;
-+ (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML;
+- (NSDictionary *) parseGetFolderResponse:(NSData *)responseData;
+- (NSDictionary *) parseGetItemResponse:(NSData *)responseData;
+- (NSArray *) parseFindFolderResponse:(NSData *)responseData;
+- (NSArray *) parseFindItemResponse:(NSData *)responseData;
+- (NSDictionary *) parseSyncFolderHierarchyResponse:(NSData *)responseData;
+- (NSDictionary *) parseSyncFolderItemsResponse:(NSData *)responseData;
 
 @end

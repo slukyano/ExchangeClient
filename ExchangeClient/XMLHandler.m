@@ -10,13 +10,40 @@
 #import "GDataXMLNode.h"
 #import "Defines.h"
 
+@interface XMLHandler () {
+    NSDictionary *namespaces;
+}
+
+- (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML;
+- (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML;
+- (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML;
+
+@end
+
 @implementation XMLHandler
 
-// Обработка ответов
-
-+ (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML {
-    NSLog(@"dictionaryForFolderXML called");
+- (void) dealloc {
+    [namespaces release];
     
+    [super dealloc];
+}
+
+- (id) init {
+    self = [super init];
+    if (self) {
+        namespaces = [[NSDictionary alloc] initWithObjectsAndKeys:
+                      @"http://schemas.microsoft.com/exchange/services/2006/messages", @"m",
+                      @"http://schemas.microsoft.com/exchange/services/2006/types", @"t",
+                      @"http://www.w3.org/2001/XMLSchema-instance", @"xsi",
+                      @"http://www.w3.org/2001/XMLSchema", @"xsd",
+                      @"http://schemas.xmlsoap.org/soap/envelope/", @"s", nil];
+    }
+    
+    return self;
+}
+
+// Обработка элементов
+- (NSDictionary *) dictionaryForFolderXML:(GDataXMLElement *)folderXML {
     GDataXMLElement *folderIDXML = [[folderXML elementsForName:@"t:FolderId"] objectAtIndex:0];
     NSString *folderID = [[folderIDXML attributeForName:@"Id"] stringValue];
     NSString *folderIDChangeKey = [[folderIDXML attributeForName:@"ChangeKey"] stringValue];
@@ -31,7 +58,8 @@
     
     NSString *unreadCount = [[[folderXML elementsForName:@"t:UnreadCount"] objectAtIndex:0] stringValue];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:folderID, @"FolderID",
+    return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeFolder], @"DataType",
+            folderID, @"FolderID",
             folderIDChangeKey, @"FolderIDChangeKey",
             parentFolderID, @"ParentFolderID",
             parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
@@ -40,18 +68,14 @@
             unreadCount, @"UnreadCount", nil];
 }
 
-+ (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML {
-    NSLog(@"dictionaryForMailboxXML called");
-    
+- (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML {
     NSString *name = [[[mailboxXML elementsForName:@"t:Name"] objectAtIndex:0] stringValue];
     NSString *email = [[[mailboxXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", email, @"EmailAddress", nil];
 }
 
-+ (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
-    NSLog(@"dictionaryForMessageXML called");
-    
+- (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
     GDataXMLElement *itemIDXML = [[messageXML elementsForName:@"t:ItemId"] objectAtIndex:0];
     NSString *itemID = [[itemIDXML attributeForName:@"Id"] stringValue];
     NSString *itemIDChangeKey = [[itemIDXML attributeForName:@"ChangeKey"] stringValue];
@@ -77,7 +101,8 @@
     GDataXMLElement *senderMailboxXML = [[senderXML elementsForName:@"t:Mailbox"] objectAtIndex:0];
     NSDictionary *sender = [self dictionaryForMailboxXML:senderMailboxXML];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:itemID, @"ItemID",
+    return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeEMail], @"DataType",
+            itemID, @"ItemID",
             itemIDChangeKey, @"ItemIDChangeKey",
             parentFolderID, @"ParentFolderID",
             parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
@@ -88,15 +113,220 @@
             sender, @"From", nil];
 }
 
+// Обработка ответов
+- (NSDictionary *) parseGetFolderResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        return nil;
+    }
+    
+    GDataXMLElement *folderXML = [[response nodesForXPath:@"//t:Folder"
+                                               namespaces:namespaces
+                                                    error:nil] objectAtIndex:0];
+    NSDictionary *folderDictionary = [self dictionaryForFolderXML:folderXML];
+    
+    [response release];
+    
+    return folderDictionary;
+}
+
+- (NSDictionary *) parseGetItemResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        return nil;
+    }
+    
+    GDataXMLElement *itemXML = [[response nodesForXPath:@"//t:Message"
+                                             namespaces:namespaces
+                                                  error:nil] objectAtIndex:0];
+    NSDictionary *itemDictionary = [self dictionaryForMessageXML:itemXML];
+    
+    [response release];
+    
+    return itemDictionary;
+}
+
+- (NSArray *) parseFindFolderResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        return nil;
+    }
+    
+    NSMutableArray *result = [NSMutableArray array];
+    
+    NSArray *folders = [response nodesForXPath:@"//t:Folder"
+                                    namespaces:namespaces
+                                         error:nil];
+    for (GDataXMLElement *currentFolder in folders) {
+        [result addObject:[self dictionaryForFolderXML:currentFolder]];
+    }
+    
+    [response release];
+    
+    return result;
+}
+
+- (NSArray *) parseFindItemResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        return nil;
+    }
+    
+    NSMutableArray *result = [NSMutableArray array];
+    
+    NSArray *messages = [response nodesForXPath:@"//t:Message"
+                                     namespaces:namespaces
+                                          error:nil];
+    for (GDataXMLElement *currentMessage in messages) {
+        [result addObject:[self dictionaryForMessageXML:currentMessage]];
+    }
+    
+    [response release];
+    
+    return result;
+}
+
+- (NSDictionary *) parseSyncFolderHierarchyResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        return nil;
+    }
+    
+    NSArray *foldersToCreateXML = [response nodesForXPath:@"//t:Create/t:Folder"
+                                               namespaces:namespaces
+                                                    error:nil];
+    NSMutableArray *foldersToCreate = [NSMutableArray array];
+    for (GDataXMLElement *currentFolder in foldersToCreateXML)
+        [foldersToCreate addObject:[self dictionaryForFolderXML:currentFolder]];
+    
+    NSArray *foldersToUpdateXML = [response nodesForXPath:@"//t:Create/t:Folder"
+                                               namespaces:namespaces
+                                                    error:nil];
+    NSMutableArray *foldersToUpdate = [NSMutableArray array];
+    for (GDataXMLElement *currentFolder in foldersToUpdateXML)
+        [foldersToUpdate addObject:[self dictionaryForFolderXML:currentFolder]];
+    
+    NSArray *foldersToDeleteXML = [response nodesForXPath:@"//t:Create/t:Folder"
+                                               namespaces:namespaces
+                                                    error:nil];
+    NSMutableArray *foldersToDelete = [NSMutableArray array];
+    for (GDataXMLElement *currentFolder in foldersToDeleteXML)
+        [foldersToDelete addObject:[self dictionaryForFolderXML:currentFolder]];
+    
+    NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:foldersToCreate, @"Create",
+                            foldersToUpdate, @"Update",
+                            foldersToDelete, @"Delete", nil];
+    
+    [response release];
+    
+    return result;
+}
+
+- (NSDictionary *) parseSyncFolderItemsResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        return nil;
+    }
+    
+    NSArray *messagesToCreateXML = [response nodesForXPath:@"//t:Create/t:Message"
+                                                namespaces:namespaces
+                                                     error:nil];
+    NSMutableArray *messagesToCreate = [NSMutableArray array];
+    for (GDataXMLElement *currentMessage in messagesToCreateXML)
+        [messagesToCreate addObject:[self dictionaryForMessageXML:currentMessage]];
+    
+    NSArray *messagesToUpdateXML = [response nodesForXPath:@"//t:Create/t:Message"
+                                                namespaces:namespaces
+                                                     error:nil];
+    NSMutableArray *messagesToUpdate = [NSMutableArray array];
+    for (GDataXMLElement *currentMessage in messagesToUpdateXML)
+        [messagesToUpdate addObject:[self dictionaryForMessageXML:currentMessage]];
+    
+    NSArray *messagesToDeleteXML = [response nodesForXPath:@"//t:Create/t:Message"
+                                                namespaces:namespaces
+                                                     error:nil];
+    NSMutableArray *messagesToDelete = [NSMutableArray array];
+    for (GDataXMLElement *currentMessage in messagesToDeleteXML)
+        [messagesToDelete addObject:[self dictionaryForMessageXML:currentMessage]];
+    
+    NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:messagesToCreate, @"Create",
+                            messagesToUpdate, @"Update",
+                            messagesToDelete, @"Delete", nil];
+    
+    [response release];
+    
+    return result;
+}
+
 // Генерация запросов
 
-+ (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
+- (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <soap:Body>\
                         <GetFolder xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
-                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <FolderShape>\
                         <t:BaseShape>AllProperties</t:BaseShape>\
                         </FolderShape>\
@@ -110,7 +340,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestGetFolderWithDistinguishedID:(NSString *)distinguishedFolderId {
+- (NSData *) XMLRequestGetFolderWithDistinguishedID:(NSString *)distinguishedFolderId {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
@@ -130,7 +360,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestGetItemWithID:(NSString *)itemID {
+- (NSData *) XMLRequestGetItemWithID:(NSString *)itemID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope\
                         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\
@@ -155,7 +385,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID usingSyncState:(NSString *)syncState {
+- (NSData *) XMLRequestSyncItemsInFolderWithID:(NSString *)folderID usingSyncState:(NSString *)syncState {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
@@ -178,7 +408,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestSyncFolderHierarchyUsingSyncState:(NSString *)syncState {
+- (NSData *) XMLRequestSyncFolderHierarchyUsingSyncState:(NSString *)syncState {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
@@ -195,10 +425,10 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestFindFoldersInFolderWithID:(NSString *)folderID {
+- (NSData *) XMLRequestFindFoldersInFolderWithID:(NSString *)folderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <soap:Body>\
                         <FindFolder Traversal=\"Shallow\" xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
                         <FolderShape>\
@@ -214,7 +444,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID {
+- (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
@@ -233,7 +463,7 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID {
+- (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
                         xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
@@ -254,13 +484,13 @@
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }
 
-+ (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID {
+- (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID {
     NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
                         <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
-                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
                         <soap:Body>\
                         <FindItem xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\"\
-                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
+                        xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\"\
                         Traversal=\"Shallow\">\
                         <ItemShape>\
                         <t:BaseShape>AllProperties</t:BaseShape>\
