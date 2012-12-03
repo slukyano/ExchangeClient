@@ -108,7 +108,7 @@
             parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
             subject, @"Subject",
             body, @"Body",
-            bodyType, @"BodyType",
+            [NSNumber numberWithUnsignedInteger:bodyType], @"BodyType",
             recipients, @"Recipients",
             sender, @"From", nil];
 }

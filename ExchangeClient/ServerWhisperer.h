@@ -42,7 +42,7 @@
  ParentFolderIDChangeKey
  Subject - тема письма
  Body - содержимое
- BodyType - тип содержимого письма (EMailContentType-константа, определены в Defines.h)
+ BodyType - тип содержимого письма (ключ - NSString, значение - NSNumber, содержащий EMailContentType-константу, определенную в Defines.h)
  Recipients - NSArray словарей получателей. Ключи словарей получателей:
  Name
  EmailAddress

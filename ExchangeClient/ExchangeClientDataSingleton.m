@@ -47,28 +47,28 @@ static ExchangeClientDataSingleton *_instance;
                                    @"222", @"ParentFolderID",
                                    @"Subject of mail1", @"Subject",
                                    @"Body of mail1", @"Body",
-                                   EMailContentTypePlainText, @"BodyType", nil];
+                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
             NSDictionary *mail2 = [NSDictionary dictionaryWithObjectsAndKeys:
                                    @"Mail", @"Type",
                                    @"m2", @"ItemID",
                                    @"222", @"ParentFolderID",
                                    @"Subject of mail2", @"Subject",
                                    @"Body of mail2", @"Body",
-                                   EMailContentTypePlainText, @"BodyType", nil];
+                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
             NSDictionary *mail3 = [NSDictionary dictionaryWithObjectsAndKeys:
                                    @"Mail", @"Type",
                                    @"m3", @"ItemID",
                                    @"444", @"ParentFolderID",
                                    @"Subject of mail3", @"Subject",
                                    @"Body of mail3", @"Body",
-                                   EMailContentTypePlainText, @"BodyType", nil];
+                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
             NSDictionary *mail4 = [NSDictionary dictionaryWithObjectsAndKeys:
                                    @"Mail", @"Type",
                                    @"m1", @"ItemID",
                                    @"333", @"ParentFolderID",
                                    @"Subject of mail4", @"Subject",
                                    @"Body of mail4", @"Body",
-                                   EMailContentTypePlainText, @"BodyType", nil];
+                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
             _instance.dataArray = [NSMutableArray arrayWithObjects:folderRoot,folderInbox,folderSent, folderImportant,mail1,mail2,mail3,mail4, nil];
             
         }
