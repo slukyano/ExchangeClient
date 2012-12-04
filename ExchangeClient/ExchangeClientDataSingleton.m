@@ -24,22 +24,26 @@ static ExchangeClientDataSingleton *_instance;
                                         @"Folder", @"Type",
                                         @"111", @"FolderID",
                                        @"", @"ParentFolderID",
-                                       @"Root", @"DisplayName", nil];
+                                       @"Root", @"DisplayName",
+                                        @"0", @"UnreadCount", nil];
             NSDictionary *folderInbox = [NSDictionary dictionaryWithObjectsAndKeys:
                                          @"Folder", @"Type",
                                         @"222", @"FolderID",
                                         @"111", @"ParentFolderID",
-                                        @"Inbox", @"DisplayName", nil];
+                                        @"Inbox", @"DisplayName",
+                                        @"0", @"UnreadCount", nil];
             NSDictionary *folderSent = [NSDictionary dictionaryWithObjectsAndKeys:
                                         @"Folder", @"Type",
                                         @"333", @"FolderID",
                                         @"111", @"ParentFolderID",
-                                        @"Sent", @"DisplayName", nil];
+                                        @"Sent", @"DisplayName",
+                                        @"0", @"UnreadCount", nil];
             NSDictionary *folderImportant = [NSDictionary dictionaryWithObjectsAndKeys:
                                         @"Folder", @"Type",
                                         @"444", @"FolderID",
                                         @"222", @"ParentFolderID",
-                                        @"Important", @"DisplayName", nil];
+                                        @"Important", @"DisplayName",
+                                        @"1", @"UnreadCount", nil];
             
             NSDictionary *mail1 = [NSDictionary dictionaryWithObjectsAndKeys:
                                    @"Mail", @"Type",

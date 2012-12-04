@@ -10,6 +10,7 @@
 #import "ContentViewController.h"
 #import "ExchangeClientDataSingleton.h"
 #import "NewMessageViewController.h"
+#import "TableCell.h"
 @interface TableViewController () {
     NSString *currentFolderID;
     NSMutableArray *itemsInCurrentFolder;
@@ -95,14 +96,23 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+    TableCell *cell = (TableCell *) [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
     if (cell == nil) {
-        cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier] autorelease];
+        UIViewController *tempVC = [[UIViewController alloc] initWithNibName:@"TableCell" bundle:nil];
+        cell=(TableCell *)tempVC.view;
+        [tempVC release];
     }
+    
     if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Type"] == @"Folder") {
         cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"];
+        if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] != @"0")
+            cell.countLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"];
+        if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...")
+            cell.imageView.image = [UIImage imageNamed:@"back"];
+        else cell.imageView.image = [UIImage imageNamed:@"folder"];
     } else {
         cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Subject"];
+        cell.imageView.image = [UIImage imageNamed:@"mail"];
     }
     
     
