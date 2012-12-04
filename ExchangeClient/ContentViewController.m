@@ -12,14 +12,24 @@
 @interface ContentViewController ()
 {
     NSDictionary *mail;
+    IBOutlet UITextField *fromTextField;
+    IBOutlet UITextField *toTextField;
+    IBOutlet UITextField *subjectTextField;
+    IBOutlet UIButton *replyButton;
+    IBOutlet UIButton *forwardButton;
+    IBOutlet UITextView *bodyTextView;
+    IBOutlet UIWebView *bodyWebView;
+    
 }
 @end
 
 @implementation ContentViewController
 
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil message:(NSDictionary*)message
+- (id)initWithMessage:(NSDictionary*)message
 {
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    if ([message valueForKey:@"BodyType"] ==  [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText]) self = [super initWithNibName:@"ContentViewText" bundle:nil];
+    else self = [super initWithNibName:@"ContentViewHTML" bundle:nil];
+    
     if (self) {
         mail = message;
     }
@@ -28,19 +38,20 @@
 
 - (void)viewDidLoad
 {
-    if ([mail valueForKey:@"BodyType"] == EMailContentTypePlainText) {
-        UITextView *textView = [[UITextView alloc] initWithFrame:self.view.frame];
-        textView.text = [mail valueForKey:@"Body"];
-        [self.view addSubview:textView];
-    } else {
-        UIWebView *webView = [[UIWebView alloc] initWithFrame:self.view.frame];
-        [self.view addSubview:webView];
-    }
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                                target:self
                                action:@selector(cancelButton)] autorelease];
     self.navigationItem.rightBarButtonItem = cancel;
+    
+    subjectTextField.text = [mail valueForKey:@"Subject"];
+    if ([mail valueForKey:@"BodyType"] ==  [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText])
+        bodyTextView.text = [mail valueForKey:@"Body"];
+    else {
+        //загрузка body wev view
+    }
+        
+    
     [super viewDidLoad];
 }
 
@@ -61,4 +72,12 @@
     // Dispose of any resources that can be recreated.
 }
 
+- (void)dealloc {
+    [fromTextField release];
+    [toTextField release];
+    [subjectTextField release];
+    [replyButton release];
+    [forwardButton release];
+    [super dealloc];
+}
 @end

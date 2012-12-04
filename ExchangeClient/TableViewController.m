@@ -9,6 +9,7 @@
 #import "TableViewController.h"
 #import "ContentViewController.h"
 #import "ExchangeClientDataSingleton.h"
+#import "NewMessageViewController.h"
 @interface TableViewController () {
     NSString *currentFolderID;
     NSMutableArray *itemsInCurrentFolder;
@@ -34,7 +35,17 @@
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                                target:self
                                action:@selector(cancelButton)] autorelease];
+    
     self.navigationItem.rightBarButtonItem = cancel;
+
+    UIButton *titleButton = [UIButton buttonWithType:UIButtonTypeCustom];
+    [titleButton setImage:[UIImage imageNamed:@"mailbutton"] forState:UIControlStateNormal];
+    [titleButton addTarget:self action:@selector(newMessageButton) forControlEvents:UIControlEventTouchUpInside];
+    [titleButton setFrame:CGRectMake(0, 0, 100, 35)];
+    self.navigationItem.titleView = titleButton;
+
+
+
     
     [super viewDidLoad];
 
@@ -43,6 +54,12 @@
  
     // Uncomment the following line to display an Edit button in the navigation bar for this view controller.
     // self.navigationItem.rightBarButtonItem = self.editButtonItem;
+}
+
+- (void) newMessageButton {
+    NewMessageViewController *newMessageViewController = [[NewMessageViewController alloc] initWithNibName:@"NewMessageViewController" bundle: nil];
+    [self.navigationController pushViewController:newMessageViewController animated:YES];
+    [newMessageViewController release];
 }
 
 - (void) cancelButton {
@@ -145,7 +162,7 @@
         itemsInCurrentFolder = [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
         [self.tableView reloadData];
     } else {
-        ContentViewController *contentViewController = [[ContentViewController alloc] initWithNibName:nil bundle:nil message:[itemsInCurrentFolder objectAtIndex:indexPath.row]];
+        ContentViewController *contentViewController = [[ContentViewController alloc] initWithMessage:[itemsInCurrentFolder objectAtIndex:indexPath.row]];
         [self.navigationController pushViewController:contentViewController animated:YES];
         [contentViewController release];
     }

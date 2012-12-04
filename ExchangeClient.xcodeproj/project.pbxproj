@@ -8,6 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		C318073316502F4F00F87853 /* ContentViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C318073216502F4F00F87853 /* ContentViewController.m */; };
+		C32311BA166CDE690026AB64 /* mailbutton.png in Resources */ = {isa = PBXBuildFile; fileRef = C32311B9166CDE690026AB64 /* mailbutton.png */; };
+		C32311C3166CED8F0026AB64 /* NewMessageViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = C32311C1166CED8E0026AB64 /* NewMessageViewController.m */; };
+		C32311C4166CED8F0026AB64 /* NewMessageViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = C32311C2166CED8E0026AB64 /* NewMessageViewController.xib */; };
+		C32311CC166D0EBD0026AB64 /* ContentViewText.xib in Resources */ = {isa = PBXBuildFile; fileRef = C32311CB166D0EBD0026AB64 /* ContentViewText.xib */; };
+		C32311CE166D0ED90026AB64 /* ContentViewHTML.xib in Resources */ = {isa = PBXBuildFile; fileRef = C32311CD166D0ED90026AB64 /* ContentViewHTML.xib */; };
 		C3B2C7C31663267E00C6224C /* ExchangeClientDataSingleton.m in Sources */ = {isa = PBXBuildFile; fileRef = C3B2C7C21663267E00C6224C /* ExchangeClientDataSingleton.m */; };
 		C3CB567C16501F3C002E75B2 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3CB567B16501F3C002E75B2 /* UIKit.framework */; };
 		C3CB567E16501F3C002E75B2 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C3CB567D16501F3C002E75B2 /* Foundation.framework */; };
@@ -45,6 +50,12 @@
 /* Begin PBXFileReference section */
 		C318073116502F4F00F87853 /* ContentViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ContentViewController.h; sourceTree = "<group>"; };
 		C318073216502F4F00F87853 /* ContentViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ContentViewController.m; sourceTree = "<group>"; };
+		C32311B9166CDE690026AB64 /* mailbutton.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = mailbutton.png; sourceTree = "<group>"; };
+		C32311C0166CED8E0026AB64 /* NewMessageViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NewMessageViewController.h; sourceTree = "<group>"; };
+		C32311C1166CED8E0026AB64 /* NewMessageViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NewMessageViewController.m; sourceTree = "<group>"; };
+		C32311C2166CED8E0026AB64 /* NewMessageViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = NewMessageViewController.xib; sourceTree = "<group>"; };
+		C32311CB166D0EBD0026AB64 /* ContentViewText.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ContentViewText.xib; sourceTree = "<group>"; };
+		C32311CD166D0ED90026AB64 /* ContentViewHTML.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ContentViewHTML.xib; sourceTree = "<group>"; };
 		C3B2C7C11663267E00C6224C /* ExchangeClientDataSingleton.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExchangeClientDataSingleton.h; sourceTree = "<group>"; };
 		C3B2C7C21663267E00C6224C /* ExchangeClientDataSingleton.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExchangeClientDataSingleton.m; sourceTree = "<group>"; };
 		C3CB567716501F3C002E75B2 /* ExchangeClient.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ExchangeClient.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -128,6 +139,9 @@
 				C3CB569816502029002E75B2 /* MainWindow.xib */,
 				C3CB56A016502117002E75B2 /* LoginViewController.xib */,
 				C3CB56A516502196002E75B2 /* TableViewController.xib */,
+				C32311C2166CED8E0026AB64 /* NewMessageViewController.xib */,
+				C32311CB166D0EBD0026AB64 /* ContentViewText.xib */,
+				C32311CD166D0ED90026AB64 /* ContentViewHTML.xib */,
 			);
 			name = XIBs;
 			sourceTree = "<group>";
@@ -141,6 +155,8 @@
 				C318073216502F4F00F87853 /* ContentViewController.m */,
 				C3CB56A316502196002E75B2 /* TableViewController.h */,
 				C3CB56A416502196002E75B2 /* TableViewController.m */,
+				C32311C0166CED8E0026AB64 /* NewMessageViewController.h */,
+				C32311C1166CED8E0026AB64 /* NewMessageViewController.m */,
 			);
 			name = "User Interface";
 			sourceTree = "<group>";
@@ -196,6 +212,7 @@
 		C3CB568216501F3C002E75B2 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				C32311B9166CDE690026AB64 /* mailbutton.png */,
 				C3CB568316501F3C002E75B2 /* ExchangeClient-Info.plist */,
 				C3CB568416501F3C002E75B2 /* InfoPlist.strings */,
 				C3CB568716501F3C002E75B2 /* main.m */,
@@ -340,6 +357,10 @@
 				C3CB569916502029002E75B2 /* MainWindow.xib in Resources */,
 				C3CB56A216502117002E75B2 /* LoginViewController.xib in Resources */,
 				C3CB56A716502196002E75B2 /* TableViewController.xib in Resources */,
+				C32311BA166CDE690026AB64 /* mailbutton.png in Resources */,
+				C32311C4166CED8F0026AB64 /* NewMessageViewController.xib in Resources */,
+				C32311CC166D0EBD0026AB64 /* ContentViewText.xib in Resources */,
+				C32311CE166D0ED90026AB64 /* ContentViewHTML.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -368,6 +389,7 @@
 				CE4A5B4E166BE50300A629E9 /* ASIInputStream.m in Sources */,
 				CE4A5B4F166BE50300A629E9 /* ASINetworkQueue.m in Sources */,
 				CE4A5B50166BE50300A629E9 /* Reachability.m in Sources */,
+				C32311C3166CED8F0026AB64 /* NewMessageViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
