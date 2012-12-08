@@ -7,7 +7,6 @@
 //
 
 #import "ServerWhisperer.h"
-#import "GDataXMLNode.h"
 #import "Defines.h"
 #import "XMLHandler.h"
 #import "ASIHTTPRequest.h"
@@ -43,6 +42,20 @@
         _serverURL = [serverURL retain];
         _username = [username retain];
         _password = [password retain];
+        aXMLHandlerInstance = [[XMLHandler alloc] init];
+    }
+    
+    return self;
+}
+
+- (id) initWithUserDefaults {
+    self = [super init];
+    if (self) {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        
+        _serverURL = [NSURL URLWithString:[defaults stringForKey:@"address"]];
+        _username = [defaults stringForKey:@"name"];
+        _password = [defaults stringForKey:@"password"];
         aXMLHandlerInstance = [[XMLHandler alloc] init];
     }
     

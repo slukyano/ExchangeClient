@@ -8,10 +8,20 @@
 
 #import "ExchangeClientDataSingleton.h"
 #import "Defines.h"
+#import "DataBaseManager.h"
+#import "ServerWhisperer.h"
+
+@interface ExchangeClientDataSingleton () {
+    NSMutableArray *dataArray;
+}
+
+- (void) updateData;
+
+@end
 
 @implementation ExchangeClientDataSingleton
 
-@synthesize dataArray;
+@synthesize messageRootFolderID = _messageRootFolderID;
 
 static ExchangeClientDataSingleton *_instance;
 
@@ -19,8 +29,9 @@ static ExchangeClientDataSingleton *_instance;
     @synchronized(self) {
         if (_instance == nil) {
             _instance = [[ExchangeClientDataSingleton alloc] init];
+            [_instance updateData];
             
-            NSDictionary *folderRoot = [NSDictionary dictionaryWithObjectsAndKeys:
+            /*NSDictionary *folderRoot = [NSDictionary dictionaryWithObjectsAndKeys:
                                         @"Folder", @"Type",
                                         @"111", @"FolderID",
                                        @"", @"ParentFolderID",
@@ -73,12 +84,21 @@ static ExchangeClientDataSingleton *_instance;
                                    @"Subject of mail4", @"Subject",
                                    @"Body of mail4", @"Body",
                                    [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
-            _instance.dataArray = [NSMutableArray arrayWithObjects:folderRoot,folderInbox,folderSent, folderImportant,mail1,mail2,mail3,mail4, nil];
+            _instance.dataArray = [NSMutableArray arrayWithObjects:folderRoot,folderInbox,folderSent, folderImportant,mail1,mail2,mail3,mail4, nil];*/
             
         }
     }
     
     return _instance;
+}
+
+- (id) init {
+    self = [super init];
+    if (self) {
+        dataArray = [[NSMutableArray alloc] init];
+    }
+    
+    return self;
 }
 
 - (NSUInteger) count {
@@ -102,15 +122,16 @@ static ExchangeClientDataSingleton *_instance;
 }
 
 - (NSMutableArray *) ItemsInFolderWithID:(NSString *)currentFolderID{
-    NSMutableArray *result = [[NSMutableArray alloc] init];
-    if (currentFolderID != @"111"){
+    NSMutableArray *result = [NSMutableArray array];
+    if (![currentFolderID isEqualToString:_messageRootFolderID]){
         NSDictionary *backItem = [NSDictionary dictionaryWithObjectsAndKeys:
-                                  @"Folder", @"Type",
+                                  [NSNumber numberWithInteger:DataTypeFolder], @"DataType",
                                   @"/...", @"DisplayName", nil];
         [result addObject:backItem];
-    } 
+    }
+    
     for (NSDictionary *dict in dataArray) {
-        if ([dict valueForKey:@"ParentFolderID"] == currentFolderID)
+        if ([[dict valueForKey:@"ParentFolderID"] isEqualToString:currentFolderID])
             [result addObject:dict];
     }
     return result;
@@ -123,4 +144,72 @@ static ExchangeClientDataSingleton *_instance;
     }
     return @"error";
 }
+
+- (void) updateData {
+    //DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+    
+    //NSDictionary *changes = [dataBaseManager updateDatabaseSynchronously];
+    
+    //[dataBaseManager release];
+    
+    ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+    NSMutableArray *createFolders = [[whisperer syncFolderHierarchyUsingSyncState:nil] objectForKey:@"Create"];
+    NSMutableArray *createItems = [NSMutableArray array];
+    for (NSDictionary *dict in createFolders) {
+        [createItems addObjectsFromArray:[[whisperer syncItemsInFoldeWithID:[dict objectForKey:@"FolderID"] usingSyncState:nil] objectForKey:@"Create"]];
+    }
+    
+    [dataArray addObjectsFromArray:createFolders];
+    [dataArray addObjectsFromArray:createItems];
+    
+    NSString *inboxID = [[whisperer getFolderWithDistinguishedID:@"inbox"] objectForKey:@"FolderID"];
+    for (NSDictionary *dict in dataArray) {
+        if ([dict objectForKey:@"ParentFolderID"] == inboxID)
+            NSLog(@"%@", dict);
+    }
+    NSLog(@"%@", [whisperer getItemsInFolderWithDistinguishedID:@"inbox"]);
+    [whisperer release];
+    //[dataArray addObjectsFromArray:[changes objectForKey:@"Create"]];
+    /*
+    for (NSDictionary *objectToUpdate in [changes objectForKey:@"Update"]) {
+        for (NSDictionary *currentObject in dataArray)
+            if (([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
+                 && [[objectToUpdate objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
+                 && [[currentObject objectForKey:@"FolderID"] isEqualToString:[objectToUpdate objectForKey:@"FolderID"]])
+                || ([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
+                    && [[objectToUpdate objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
+                    && [[currentObject objectForKey:@"ItemID"] isEqualToString:[objectToUpdate objectForKey:@"ItemID"]]))
+            {
+                [dataArray removeObject:currentObject];
+                [dataArray addObject:objectToUpdate];
+            }
+    }
+    
+    for (NSDictionary *objectToDelete in [changes objectForKey:@"Delete"]) {
+        for (NSDictionary *currentObject in dataArray)
+            if (([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
+                 && [[objectToDelete objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
+                 && [[currentObject objectForKey:@"FolderID"] isEqualToString:[objectToDelete objectForKey:@"FolderID"]])
+                || ([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
+                    && [[objectToDelete objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
+                    && [[currentObject objectForKey:@"ItemID"] isEqualToString:[objectToDelete objectForKey:@"ItemID"]]))
+            {
+                [dataArray removeObject:currentObject];
+            }
+    }*/
+}
+
+- (NSString *) messageRootFolderID {
+    if (!_messageRootFolderID) {
+        ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+        
+        NSDictionary *messageRootFolder = [whisperer getFolderWithDistinguishedID:@"msgfolderroot"];
+        
+        _messageRootFolderID = [[messageRootFolder objectForKey:@"FolderID"] retain];
+        
+        [whisperer release];
+    }
+    return _messageRootFolderID;
+}
+
 @end

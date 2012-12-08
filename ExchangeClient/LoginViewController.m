@@ -81,6 +81,7 @@
         
         ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc] initWithServerURL:[NSURL URLWithString:[defaults stringForKey:@"address"]] withUsername:[defaults stringForKey:@"name"] withPassword:[defaults stringForKey:@"password"]];
         [defaults setBool:[serverWhispererInstance testUserCredential] forKey:@"logged"];
+        [serverWhispererInstance release];
         
         if ([defaults boolForKey:@"logged"]) {
             

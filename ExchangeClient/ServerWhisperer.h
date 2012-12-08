@@ -16,19 +16,21 @@
 @property (nonatomic, retain) NSString *password;
 
 - (id) initWithServerURL:(NSURL *)serverURL withUsername:(NSString *)username withPassword:(NSString *)password;
+- (id) initWithUserDefaults;
 
 // Запрос для проверки пользовательских данных
 - (BOOL) testUserCredential;
 // Получение свойств папки
-/* Методы возвращают словарь папки. Ключи (Все ключи и значения, кроме DataType, - NSString):
+/* Методы возвращают словарь папки. Ключи (все ключи NSString):
  DataType - тип объекта (ключ - NSString, значение - NSNumber, содержащий DataTypeFolder)
- FolderID - по нему и нужно делать запрос
- FolderIDChangeKey - пока не используем
- ParentFolderID
- ParentFolderIDChangeKey
- DisplayName - это имя сервер предлагает вывести
- TotalCount - число элементов в папке
- UnreadCount - число непрочитанных писем
+ FolderID - по нему и нужно делать запрос (NSString)
+ FolderIDChangeKey - пока не используем (NSString)
+ ParentFolderID (NSString)
+ ParentFolderIDChangeKey (NSString)
+ DisplayName - это имя сервер предлагает вывести (NSString)
+ TotalCount - число элементов в папке (NSNumber)
+ UnreadCount - число непрочитанных писем (NSNumber)
+ SyncState - SyncState (NSString)
  */
 - (NSDictionary *) getFolderWithID:(NSString *)folderID;
 - (NSDictionary *) getFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
@@ -53,11 +55,11 @@
 - (NSDictionary *) getItemWithID:(NSString *)itemID;
 
 // Получение изменений содержимого папки
-// Возвращает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей писем.
+// Возвращает словарь изменений. Ключи - @"SyncState", @"Create", @"Update", @"Delete", значения - SyncState и массивы словарей писем.
 - (NSDictionary *) syncItemsInFoldeWithID:(NSString *)folderID usingSyncState:(NSString *)syncState;
 
 // Получение изменений дерева папок
-// Возвращает словарь изменений. Ключи - @"Create", @"Update", @"Delete", значения - массивы словарей папок.
+// Возвращает словарь изменений. Ключи - @"SyncState", @"Create", @"Update", @"Delete", значения - SyncState и массивы словарей папок.
 - (NSDictionary *) syncFolderHierarchyUsingSyncState:(NSString *)syncState;
 
 // Получение дочерних папок (только первый уровень вложенности) указанной папки

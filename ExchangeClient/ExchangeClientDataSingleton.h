@@ -10,9 +10,9 @@
 
 @interface ExchangeClientDataSingleton : NSObject
 
-@property (nonatomic, retain) NSMutableArray *dataArray;
+@property (nonatomic, readonly, getter = messageRootFolderID) NSString *messageRootFolderID;
 
-+(ExchangeClientDataSingleton *)instance;
++ (ExchangeClientDataSingleton *)instance;
 
 - (NSUInteger) count;
 - (id) objectAtIndex:(NSUInteger)index;
@@ -22,4 +22,7 @@
 
 - (NSMutableArray *) ItemsInFolderWithID:(NSString *)currentFolderID;
 - (NSString *)ParentIDForFolderWithID:(NSString *)currentFolderID;
+
+- (NSString *)messageRootFolderID;
+
 @end

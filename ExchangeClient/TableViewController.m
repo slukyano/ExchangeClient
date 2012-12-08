@@ -11,6 +11,8 @@
 #import "ExchangeClientDataSingleton.h"
 #import "NewMessageViewController.h"
 #import "TableCell.h"
+#import "Defines.h"
+
 @interface TableViewController () {
     NSString *currentFolderID;
     NSMutableArray *itemsInCurrentFolder;
@@ -30,8 +32,8 @@
 
 - (void)viewDidLoad
 {
-    currentFolderID = @"111";
-    itemsInCurrentFolder = [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
+    currentFolderID = [[ExchangeClientDataSingleton instance] messageRootFolderID];
+    itemsInCurrentFolder = [[[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID] retain];
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                                target:self
@@ -44,9 +46,6 @@
     [titleButton addTarget:self action:@selector(newMessageButton) forControlEvents:UIControlEventTouchUpInside];
     [titleButton setFrame:CGRectMake(0, 0, 100, 35)];
     self.navigationItem.titleView = titleButton;
-
-
-
     
     [super viewDidLoad];
 
@@ -103,18 +102,22 @@
         [tempVC release];
     }
     
-    if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Type"] == @"Folder") {
+    NSInteger currentDataType = [[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
+    if (currentDataType == DataTypeFolder) {
         cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"];
-        if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] != @"0")
-            cell.countLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"];
+        if ([[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] integerValue] != 0)
+            cell.countLabel.text = [NSString stringWithFormat:@"%d", [[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] integerValue]];
         if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...")
             cell.imageView.image = [UIImage imageNamed:@"back"];
-        else cell.imageView.image = [UIImage imageNamed:@"folder"];
-    } else {
+        else
+            cell.imageView.image = [UIImage imageNamed:@"folder"];
+    } else if (currentDataType == DataTypeEMail) {
         cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Subject"];
         cell.imageView.image = [UIImage imageNamed:@"mail"];
+    } else {
+        cell.textLabel.text = @"Wrong DataType";
+        cell.imageView.image = [UIImage imageNamed:@"mail"];
     }
-    
     
     return cell;
 }
@@ -162,16 +165,17 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Type"] == @"Folder") {
-        
+    NSInteger currentDataType = [[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
+    if (currentDataType == DataTypeFolder) {
         if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...") {
             currentFolderID = [[ExchangeClientDataSingleton instance] ParentIDForFolderWithID:currentFolderID];
         } else {
             currentFolderID = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"FolderID"];
         }
-        itemsInCurrentFolder = [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
+        [itemsInCurrentFolder release];
+        itemsInCurrentFolder = [[[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID] retain];
         [self.tableView reloadData];
-    } else {
+    } else if (currentDataType == DataTypeEMail) {
         ContentViewController *contentViewController = [[ContentViewController alloc] initWithMessage:[itemsInCurrentFolder objectAtIndex:indexPath.row]];
         [self.navigationController pushViewController:contentViewController animated:YES];
         [contentViewController release];

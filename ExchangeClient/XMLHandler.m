@@ -54,9 +54,16 @@
     
     NSString *displayName = [[[folderXML elementsForName:@"t:DisplayName"] objectAtIndex:0] stringValue];
     
-    NSString *totalCount = [[[folderXML elementsForName:@"t:TotalCount"] objectAtIndex:0] stringValue];
+    NSNumberFormatter *formatter = [[NSNumberFormatter alloc] init];
+    [formatter setNumberStyle:NSNumberFormatterDecimalStyle];
     
-    NSString *unreadCount = [[[folderXML elementsForName:@"t:UnreadCount"] objectAtIndex:0] stringValue];
+    NSString *totalCountString = [[[folderXML elementsForName:@"t:TotalCount"] objectAtIndex:0] stringValue];
+    NSNumber *totalCount =  [formatter numberFromString:totalCountString];
+    
+    NSString *unreadCountString = [[[folderXML elementsForName:@"t:UnreadCount"] objectAtIndex:0] stringValue];
+    NSNumber *unreadCount = [formatter numberFromString:unreadCountString];
+    
+    [formatter release];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeFolder], @"DataType",
             folderID, @"FolderID",
@@ -70,9 +77,9 @@
 
 - (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML {
     NSString *name = [[[mailboxXML elementsForName:@"t:Name"] objectAtIndex:0] stringValue];
-    NSString *email = [[[mailboxXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
+    NSString *emailAddress = [[[mailboxXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", email, @"EmailAddress", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", emailAddress, @"EmailAddress", nil];
 }
 
 - (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
@@ -97,9 +104,9 @@
     for (GDataXMLElement *singleRecipientXML in recipientsXML)
         [recipients addObject:[self dictionaryForMailboxXML:singleRecipientXML]];
     
-    GDataXMLElement *senderXML = [[messageXML elementsForName:@"t:From"] objectAtIndex:0];
-    GDataXMLElement *senderMailboxXML = [[senderXML elementsForName:@"t:Mailbox"] objectAtIndex:0];
-    NSDictionary *sender = [self dictionaryForMailboxXML:senderMailboxXML];
+    GDataXMLElement *fromXML = [[messageXML elementsForName:@"t:From"] objectAtIndex:0];
+    GDataXMLElement *fromMailboxXML = [[fromXML elementsForName:@"t:Mailbox"] objectAtIndex:0];
+    NSDictionary *from = [self dictionaryForMailboxXML:fromMailboxXML];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeEMail], @"DataType",
             itemID, @"ItemID",
@@ -110,7 +117,7 @@
             body, @"Body",
             [NSNumber numberWithUnsignedInteger:bodyType], @"BodyType",
             recipients, @"Recipients",
-            sender, @"From", nil];
+            from, @"From", nil];
 }
 
 // Обработка ответов
@@ -127,6 +134,7 @@
         NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
+        [response release];
         return nil;
     }
     
@@ -153,6 +161,7 @@
         NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
+        [response release];
         return nil;
     }
     
@@ -179,6 +188,7 @@
         NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
+        [response release];
         return nil;
     }
     
@@ -209,6 +219,7 @@
         NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
+        [response release];
         return nil;
     }
     
@@ -239,8 +250,13 @@
         NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
+        [response release];
         return nil;
     }
+    
+    NSString *syncState = [[[response nodesForXPath:@"//m:SyncState"
+                                         namespaces:namespaces
+                                              error:nil] objectAtIndex:0] stringValue];
     
     NSArray *foldersToCreateXML = [response nodesForXPath:@"//t:Create/t:Folder"
                                                namespaces:namespaces
@@ -249,21 +265,22 @@
     for (GDataXMLElement *currentFolder in foldersToCreateXML)
         [foldersToCreate addObject:[self dictionaryForFolderXML:currentFolder]];
     
-    NSArray *foldersToUpdateXML = [response nodesForXPath:@"//t:Create/t:Folder"
+    NSArray *foldersToUpdateXML = [response nodesForXPath:@"//t:Update/t:Folder"
                                                namespaces:namespaces
                                                     error:nil];
     NSMutableArray *foldersToUpdate = [NSMutableArray array];
     for (GDataXMLElement *currentFolder in foldersToUpdateXML)
         [foldersToUpdate addObject:[self dictionaryForFolderXML:currentFolder]];
     
-    NSArray *foldersToDeleteXML = [response nodesForXPath:@"//t:Create/t:Folder"
+    NSArray *foldersToDeleteXML = [response nodesForXPath:@"//t:Delete/t:Folder"
                                                namespaces:namespaces
                                                     error:nil];
     NSMutableArray *foldersToDelete = [NSMutableArray array];
     for (GDataXMLElement *currentFolder in foldersToDeleteXML)
         [foldersToDelete addObject:[self dictionaryForFolderXML:currentFolder]];
     
-    NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:foldersToCreate, @"Create",
+    NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:syncState, @"SyncState",
+                            foldersToCreate, @"Create",
                             foldersToUpdate, @"Update",
                             foldersToDelete, @"Delete", nil];
     
@@ -285,8 +302,13 @@
         NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
+        [response release];
         return nil;
     }
+    
+    NSString *syncState = [[[response nodesForXPath:@"//m:SyncState"
+                                         namespaces:namespaces
+                                              error:nil] objectAtIndex:0] stringValue];
     
     NSArray *messagesToCreateXML = [response nodesForXPath:@"//t:Create/t:Message"
                                                 namespaces:namespaces
@@ -295,21 +317,22 @@
     for (GDataXMLElement *currentMessage in messagesToCreateXML)
         [messagesToCreate addObject:[self dictionaryForMessageXML:currentMessage]];
     
-    NSArray *messagesToUpdateXML = [response nodesForXPath:@"//t:Create/t:Message"
+    NSArray *messagesToUpdateXML = [response nodesForXPath:@"//t:Update/t:Message"
                                                 namespaces:namespaces
                                                      error:nil];
     NSMutableArray *messagesToUpdate = [NSMutableArray array];
     for (GDataXMLElement *currentMessage in messagesToUpdateXML)
         [messagesToUpdate addObject:[self dictionaryForMessageXML:currentMessage]];
     
-    NSArray *messagesToDeleteXML = [response nodesForXPath:@"//t:Create/t:Message"
+    NSArray *messagesToDeleteXML = [response nodesForXPath:@"//t:Delete/t:Message"
                                                 namespaces:namespaces
                                                      error:nil];
     NSMutableArray *messagesToDelete = [NSMutableArray array];
     for (GDataXMLElement *currentMessage in messagesToDeleteXML)
         [messagesToDelete addObject:[self dictionaryForMessageXML:currentMessage]];
     
-    NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:messagesToCreate, @"Create",
+    NSDictionary *result = [NSDictionary dictionaryWithObjectsAndKeys:syncState, @"SyncState",
+                            messagesToCreate, @"Create",
                             messagesToUpdate, @"Update",
                             messagesToDelete, @"Delete", nil];
     
