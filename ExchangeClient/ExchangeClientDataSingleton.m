@@ -146,14 +146,15 @@ static ExchangeClientDataSingleton *_instance;
 }
 
 - (void) updateData {
-    //DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+    DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
     
-    //NSDictionary *changes = [dataBaseManager updateDatabaseSynchronously];
+    NSDictionary *changes = [dataBaseManager updateDatabaseSynchronously];
     
-    //[dataBaseManager release];
+    [dataBaseManager release];
     
-    ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+    /*ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
     NSMutableArray *createFolders = [[whisperer syncFolderHierarchyUsingSyncState:nil] objectForKey:@"Create"];
+    
     NSMutableArray *createItems = [NSMutableArray array];
     for (NSDictionary *dict in createFolders) {
         [createItems addObjectsFromArray:[[whisperer syncItemsInFoldeWithID:[dict objectForKey:@"FolderID"] usingSyncState:nil] objectForKey:@"Create"]];
@@ -168,9 +169,10 @@ static ExchangeClientDataSingleton *_instance;
             NSLog(@"%@", dict);
     }
     NSLog(@"%@", [whisperer getItemsInFolderWithDistinguishedID:@"inbox"]);
-    [whisperer release];
-    //[dataArray addObjectsFromArray:[changes objectForKey:@"Create"]];
-    /*
+    [whisperer release];*/
+    
+    [dataArray addObjectsFromArray:[changes objectForKey:@"Create"]];
+    
     for (NSDictionary *objectToUpdate in [changes objectForKey:@"Update"]) {
         for (NSDictionary *currentObject in dataArray)
             if (([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
@@ -196,7 +198,7 @@ static ExchangeClientDataSingleton *_instance;
             {
                 [dataArray removeObject:currentObject];
             }
-    }*/
+    }
 }
 
 - (NSString *) messageRootFolderID {
