@@ -72,4 +72,6 @@
 - (NSArray *) getItemsInFolderWithID:(NSString *)folderID;
 - (NSArray *) getItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 
+- (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary;
+
 @end

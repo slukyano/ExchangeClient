@@ -64,7 +64,7 @@
 - (id) init {
     self = [super init];
     if (self) {
-        databasePath = [DataBaseManager dataBasePathForUser:@"default"];
+        databasePath = [[DataBaseManager dataBasePathForUser:@"default"] retain];
         [self resetDatabase];
         hierarchySyncState = [[NSString string] retain];
     }
@@ -75,7 +75,7 @@
 - (id) initWithDatabaseForUser:(NSString *)username {
     self = [super init];
     if (self) {
-        databasePath = [DataBaseManager dataBasePathForUser:username];
+        databasePath = [[DataBaseManager dataBasePathForUser:username] retain];
         //[[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
         if (![[NSFileManager defaultManager] fileExistsAtPath:databasePath])
             [self resetDatabase];
@@ -115,10 +115,10 @@
 
     NSString *result = @"";
     
-    FMResultSet *resultSetDebug = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS"];
+    /*FMResultSet *resultSetDebug = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS"];
     while ([resultSetDebug next]) {
         NSLog(@"%@ - %@", [resultSetDebug stringForColumn:@"ParameterName"], [resultSetDebug stringForColumn:@"ParameterValue"]);
-    }
+    }*/
     
     FMResultSet *resultSet = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS WHERE ParameterName = %@", @"HierarchySyncState"];
     if ([resultSet next]) {
@@ -306,11 +306,39 @@
     return result;
 }
 
-- (NSArray *) folderAndItemsInFolderWithID:(NSString *)folderID {
+- (NSArray *) foldersAndItemsInFolderWithID:(NSString *)folderID {
     NSMutableArray *result = [NSMutableArray arrayWithArray:[self foldersInFolderWithID:folderID]];
     [result addObjectsFromArray:[self itemsInFolderWithID:folderID]];
     
     return result;
+}
+
+- (NSArray *) foldersAndItemsInParentFolderOfFolderWithID:(NSString *)folderID {
+    return [self foldersAndItemsInFolderWithID:[[self folderWithID:folderID] objectForKey:@"ParentFolderID"]];
+}
+
+- (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary {
+    ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+    
+    if ([whisperer sendMessageUsingDictionary:messageDictionary]) {
+        FMDatabase *db = [[FMDatabase alloc] initWithPath:databasePath];
+        if (![db open]) {
+            NSLog(@"Database open error");
+            [db release];
+            return nil;
+        }
+        
+        [self addItemUsingDictionary:messageDictionary inDatabase:db];
+        
+        [db close];
+        [db release];
+        
+        return YES;
+    }
+    else {
+        NSLog(@"Can't create new message");
+        return NO;
+    }
 }
 
 - (void) addFolderUsingDictionary:(NSDictionary *)folderDictionary inDatabase:(FMDatabase *)db {
@@ -334,9 +362,9 @@
     NSString *fromName = [from objectForKey:@"Name"];
     NSString *fromEmailAddress = [from objectForKey:@"EmailAddress"];
     
-    NSMutableDictionary *modifiedItemDictionary = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
+    NSDictionary *modifiedItemDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:
                                                    [itemDictionary objectForKey:@"ItemID"], @"ItemID",
-                                                   [itemDictionary objectForKey: @"ItemIDChangeKey"], @"ItemIDChangeKey",
+                                                   [itemDictionary objectForKey:@"ItemIDChangeKey"], @"ItemIDChangeKey",
                                                    [itemDictionary objectForKey:@"ParentFolderID"], @"ParentFolderID",
                                                    [itemDictionary objectForKey:@"ParentFolderIDChangeKey"], @"ParentFolderIDChangeKey",
                                                    [itemDictionary objectForKey:@"Subject"], @"Subject",
@@ -499,10 +527,10 @@
     [db executeUpdate:@"CREATE TABLE PARAMETERS (ParameterName, ParameterValue)"];
     [db executeUpdateWithFormat:@"INSERT INTO PARAMETERS VALUES (%@, %@)", @"HierarchySyncState", @""];
     
-    FMResultSet *resultSetDebug = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS"];
+    /*FMResultSet *resultSetDebug = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS"];
     while ([resultSetDebug next]) {
         NSLog(@"%@ - %@", [resultSetDebug stringForColumn:@"ParameterName"], [resultSetDebug stringForColumn:@"ParameterValue"]);
-    }
+    }*/
     
     if (hierarchySyncState)
         [hierarchySyncState release];

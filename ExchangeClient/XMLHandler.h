@@ -21,6 +21,7 @@
 - (NSData *) XMLRequestFindFoldersInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
 - (NSData *) XMLRequestFindItemsInFolderWithID:(NSString *)folderID;
 - (NSData *) XMLRequestFindItemsInFolderWithDistinguishedID:(NSString *)distinguishedFolderID;
+- (NSData *) XMLRequestCreateMessageWithRecipient:(NSString *)recipientMailbox withSubject:(NSString *)subject withBodyType:(NSInteger)bodyType withBody:(NSString *)body;
 
 // Обработка ответов
 - (NSDictionary *) parseGetFolderResponse:(NSData *)responseData;
@@ -29,5 +30,6 @@
 - (NSArray *) parseFindItemResponse:(NSData *)responseData;
 - (NSDictionary *) parseSyncFolderHierarchyResponse:(NSData *)responseData;
 - (NSDictionary *) parseSyncFolderItemsResponse:(NSData *)responseData;
+- (BOOL) parseCreateMessageResponse:(NSData *)responseData;
 
 @end

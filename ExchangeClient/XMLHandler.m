@@ -341,6 +341,28 @@
     return result;
 }
 
+- (BOOL) parseCreateMessageResponse:(NSData *)responseData {
+    GDataXMLDocument *response = [[GDataXMLDocument alloc] initWithData:responseData
+                                                                options:0
+                                                                  error:nil];
+    
+    NSString *responseCode = [[[response nodesForXPath:@"//m:ResponseCode"
+                                            namespaces:namespaces
+                                                 error:nil] objectAtIndex:0] stringValue];
+    if (![responseCode isEqualToString:@"NoError"]) {
+        NSLog(@"Error response");
+        NSLog(@"%@", [[[response nodesForXPath:@"//m:ResponseCode"
+                                    namespaces:namespaces
+                                         error:nil] objectAtIndex:0] stringValue]);
+        [response release];
+        return nil;
+    }
+    
+    [response release];
+    
+    return [responseCode isEqualToString:@"NoError"];
+}
+
 // Генерация запросов
 
 - (NSData *) XMLRequestGetFolderWithID:(NSString *)folderID {
@@ -524,6 +546,39 @@
                         </FindItem>\
                         </soap:Body>\
                         </soap:Envelope>", distinguishedFolderID];
+    
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
+
+- (NSData *) XMLRequestCreateMessageWithRecipient:(NSString *)recipientMailbox
+                                      withSubject:(NSString *)subject
+                                     withBodyType:(NSInteger)bodyType
+                                         withBody:(NSString *)body
+{
+    NSString *string = [NSString stringWithFormat:@"<?xml version=\"1.0\" encoding=\"utf-8\"?>\
+                        <soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"\
+                                            xmlns:t=\"http://schemas.microsoft.com/exchange/services/2006/types\">\
+                        <soap:Body>\
+                        <CreateItem MessageDisposition=\"SendAndSaveCopy\" xmlns=\"http://schemas.microsoft.com/exchange/services/2006/messages\">\
+                        <SavedItemFolderId>\
+                        <t:DistinguishedFolderId Id=\"outbox\" />\
+                        </SavedItemFolderId>\
+                        <Items>\
+                        <t:Message>\
+                        <t:ItemClass>IPM.Note</t:ItemClass>\
+                        <t:Subject>%@</t:Subject>\
+                        <t:Body BodyType=\"%@\">%@</t:Body>\
+                        <t:ToRecipients>\
+                        <t:Mailbox>\
+                        <t:EmailAddress>%@</t:EmailAddress>\
+                        </t:Mailbox>\
+                        </t:ToRecipients>\
+                        <t:IsRead>false</t:IsRead>\
+                        </t:Message>\
+                        </Items>\
+                        </CreateItem>\
+                        </soap:Body>\
+                        </soap:Envelope>", subject, (bodyType == EMailContentTypePlainText) ? @"Text" : @"HTML", body, recipientMailbox];
     
     return [string dataUsingEncoding:NSUTF8StringEncoding];
 }

@@ -83,7 +83,7 @@
     }
     
     // Вывод ответа сервера. Не забыть выкинуть к релизу
-    NSLog(@"%@", [request responseString]);
+    //NSLog(@"%@", [request responseString]);
     
     return [request responseData];
 }
@@ -168,6 +168,19 @@
                                         withPassword:_password
                                             withBody:[aXMLHandlerInstance XMLRequestFindItemsInFolderWithDistinguishedID:distinguishedFolderID]];
     return [aXMLHandlerInstance parseFindItemResponse:responseData];
+}
+
+- (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary {
+    NSString *subject = [messageDictionary objectForKey:@"Subject"];
+    NSString *body = [messageDictionary objectForKey:@"Body"];
+    NSInteger bodyType = [[messageDictionary objectForKey:@"BodyType"] integerValue];
+    NSString *recipientMailbox = [[[messageDictionary objectForKey:@"Recipients"] objectAtIndex:0] objectForKey:@"EmailAddress"];
+    
+    NSData *responseData = [self sendRequestToServer:_serverURL
+                                        withUsername:_username
+                                        withPassword:_password
+                                            withBody:[aXMLHandlerInstance XMLRequestCreateMessageWithRecipient:recipientMailbox withSubject:subject withBodyType:bodyType withBody:body]];
+    return [aXMLHandlerInstance parseCreateMessageResponse:responseData];
 }
 
 @end
