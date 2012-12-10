@@ -15,7 +15,6 @@
 
 @interface TableViewController () {
     NSString *currentFolderID;
-    NSMutableArray *itemsInCurrentFolder;
 }
 @end
 
@@ -33,7 +32,7 @@
 - (void)viewDidLoad
 {
     currentFolderID = [[ExchangeClientDataSingleton instance] messageRootFolderID];
-    itemsInCurrentFolder = [[[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID] retain];
+    
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
                                target:self
@@ -89,7 +88,7 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return [itemsInCurrentFolder count];
+    return [[ExchangeClientDataSingleton instance] count];
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
@@ -102,17 +101,17 @@
         [tempVC release];
     }
     
-    NSInteger currentDataType = [[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
+    NSInteger currentDataType = [[[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
     if (currentDataType == DataTypeFolder) {
-        cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"];
-        if ([[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] integerValue] != 0)
-            cell.countLabel.text = [NSString stringWithFormat:@"%d", [[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] integerValue]];
-        if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...")
+        cell.textLabel.text = [[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DisplayName"];
+        if ([[[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] integerValue] != 0)
+            cell.countLabel.text = [NSString stringWithFormat:@"%d", [[[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"UnreadCount"] integerValue]];
+        if ([[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...")
             cell.imageView.image = [UIImage imageNamed:@"back"];
         else
             cell.imageView.image = [UIImage imageNamed:@"folder"];
     } else if (currentDataType == DataTypeEMail) {
-        cell.textLabel.text = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"Subject"];
+        cell.textLabel.text = [[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"Subject"];
         cell.imageView.image = [UIImage imageNamed:@"mail"];
     } else {
         cell.textLabel.text = @"Wrong DataType";
@@ -165,18 +164,17 @@
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSInteger currentDataType = [[[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
+    NSInteger currentDataType = [[[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
     if (currentDataType == DataTypeFolder) {
-        if ([[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...") {
+        if ([[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...") {
             currentFolderID = [[ExchangeClientDataSingleton instance] ParentIDForFolderWithID:currentFolderID];
         } else {
-            currentFolderID = [[itemsInCurrentFolder objectAtIndex:indexPath.row] valueForKey:@"FolderID"];
+            currentFolderID = [[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"FolderID"];
         }
-        [itemsInCurrentFolder release];
-        itemsInCurrentFolder = [[[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID] retain];
+        [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
         [self.tableView reloadData];
     } else if (currentDataType == DataTypeEMail) {
-        ContentViewController *contentViewController = [[ContentViewController alloc] initWithMessage:[itemsInCurrentFolder objectAtIndex:indexPath.row]];
+        ContentViewController *contentViewController = [[ContentViewController alloc] initWithMessage:[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row]];
         [self.navigationController pushViewController:contentViewController animated:YES];
         [contentViewController release];
     }

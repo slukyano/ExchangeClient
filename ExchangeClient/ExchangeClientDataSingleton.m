@@ -29,7 +29,7 @@ static ExchangeClientDataSingleton *_instance;
     @synchronized(self) {
         if (_instance == nil) {
             _instance = [[ExchangeClientDataSingleton alloc] init];
-            [_instance updateData];
+            //[_instance updateData];
             
             /*NSDictionary *folderRoot = [NSDictionary dictionaryWithObjectsAndKeys:
                                         @"Folder", @"Type",
@@ -95,7 +95,8 @@ static ExchangeClientDataSingleton *_instance;
 - (id) init {
     self = [super init];
     if (self) {
-        dataArray = [[NSMutableArray alloc] init];
+        DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+        dataArray = [NSMutableArray arrayWithArray:[dataBaseManager foldersAndItemsInFolderWithID:[self messageRootFolderID]]];
     }
     
     return self;
@@ -121,34 +122,26 @@ static ExchangeClientDataSingleton *_instance;
     [dataArray replaceObjectAtIndex:index withObject:anObject];
 }
 
-- (NSMutableArray *) ItemsInFolderWithID:(NSString *)currentFolderID{
-    NSMutableArray *result = [NSMutableArray array];
+- (void) ItemsInFolderWithID:(NSString *)currentFolderID{
+    DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+    dataArray = nil;
     if (![currentFolderID isEqualToString:_messageRootFolderID]){
         NSDictionary *backItem = [NSDictionary dictionaryWithObjectsAndKeys:
                                   [NSNumber numberWithInteger:DataTypeFolder], @"DataType",
                                   @"/...", @"DisplayName", nil];
-        [result addObject:backItem];
+        [dataArray addObject:backItem];
     }
-    
-    for (NSDictionary *dict in dataArray) {
-        if ([[dict valueForKey:@"ParentFolderID"] isEqualToString:currentFolderID])
-            [result addObject:dict];
-    }
-    return result;
+    [dataArray addObjectsFromArray:[dataBaseManager foldersAndItemsInFolderWithID:currentFolderID]];
 }
 
 - (NSString *)ParentIDForFolderWithID:(NSString *)currentFolderID{
-    for (NSDictionary *dict in dataArray) {
-        if ([dict valueForKey:@"FolderID"] == currentFolderID)
-            return [dict valueForKey:@"ParentFolderID"];
-    }
-    return @"error";
+    DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+    return [dataBaseManager parentIDForFolderWithID:currentFolderID];
 }
 
 - (void) updateData {
     DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
-    
-    NSDictionary *changes = [dataBaseManager updateDatabaseSynchronously];
+    //NSDictionary *changes = [dataBaseManager updateDatabaseSynchronously];
     
     [dataBaseManager release];
     
@@ -169,7 +162,7 @@ static ExchangeClientDataSingleton *_instance;
             NSLog(@"%@", dict);
     }
     NSLog(@"%@", [whisperer getItemsInFolderWithDistinguishedID:@"inbox"]);
-    [whisperer release];*/
+    [whisperer release];
     
     [dataArray addObjectsFromArray:[changes objectForKey:@"Create"]];
     
@@ -177,7 +170,7 @@ static ExchangeClientDataSingleton *_instance;
         for (NSDictionary *currentObject in dataArray)
             if (([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
                  && [[objectToUpdate objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
-                 && [[currentObject objectForKey:@"FolderID"] isEqualToString:[objectToUpdate objectForKey:@"FolderID"]])
+                 && [[currentObject objectForKey:@"FolderID "] isEqualToString:[objectToUpdate objectForKey:@"FolderID"]])
                 || ([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
                     && [[objectToUpdate objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
                     && [[currentObject objectForKey:@"ItemID"] isEqualToString:[objectToUpdate objectForKey:@"ItemID"]]))
@@ -198,7 +191,7 @@ static ExchangeClientDataSingleton *_instance;
             {
                 [dataArray removeObject:currentObject];
             }
-    }
+    }*/
 }
 
 - (NSString *) messageRootFolderID {

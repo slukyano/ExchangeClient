@@ -22,7 +22,7 @@
 - (NSArray *) foldersInFolderWithID:(NSString *)folderID;
 - (NSArray *) itemsInFolderWithID:(NSString *)folderID;
 - (NSArray *) foldersAndItemsInFolderWithID:(NSString *)folderID;
-- (NSArray *) foldersAndItemsInParentFolderOfFolderWithID:(NSString *)folderID;
+- (NSString *) parentIDForFolderWithID:(NSString *)folderID;
 - (NSDictionary *) updateDatabaseSynchronously;
 - (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary;
 

@@ -124,6 +124,8 @@
     [addressField release];
     [nameField release];
     [passwordField release];
+    [loginButton release];
+    [exitButton release];
     [super dealloc];
 }
 - (void) serverWhisperer:(ServerWhisperer *)whisperer didFinishLoadingFolder:(NSDictionary *)folder{

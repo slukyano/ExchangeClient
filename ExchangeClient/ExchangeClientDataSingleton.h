@@ -20,7 +20,7 @@
 - (void) removeObjectAtIndex:(NSUInteger)index;
 - (void) replaceObjectAtIndex:(NSUInteger)index withObject:(id)anObject;
 
-- (NSMutableArray *) ItemsInFolderWithID:(NSString *)currentFolderID;
+- (void) ItemsInFolderWithID:(NSString *)currentFolderID;
 - (NSString *)ParentIDForFolderWithID:(NSString *)currentFolderID;
 
 - (NSString *)messageRootFolderID;

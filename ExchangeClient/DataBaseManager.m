@@ -80,7 +80,7 @@
     self = [super init];
     if (self) {
         databasePath = [[DataBaseManager dataBasePathForUser:username] retain];
-        //[[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
+        [[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
         if (![[NSFileManager defaultManager] fileExistsAtPath:databasePath])
             [self resetDatabase];
         else
@@ -333,8 +333,8 @@
     return result;
 }
 
-- (NSArray *) foldersAndItemsInParentFolderOfFolderWithID:(NSString *)folderID {
-    return [self foldersAndItemsInFolderWithID:[[self folderWithID:folderID] objectForKey:@"ParentFolderID"]];
+- (NSString *) ParentIDForFolderWithID:(NSString *)folderID {
+    return [[self folderWithID:folderID] objectForKey:@"ParentFolderID"];
 }
 
 - (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary {
