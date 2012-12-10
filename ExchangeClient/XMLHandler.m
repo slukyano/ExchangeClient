@@ -355,7 +355,7 @@
                                     namespaces:namespaces
                                          error:nil] objectAtIndex:0] stringValue]);
         [response release];
-        return nil;
+        return NO;
     }
     
     [response release];

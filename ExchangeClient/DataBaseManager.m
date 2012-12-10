@@ -42,9 +42,13 @@
 - (void) updateRecipientsForMessageWithID:(NSString *) itemID usingArray:(NSArray *)recipientsArray inDatabase:(FMDatabase *)db;
 - (void) deleteRecipientsForMessageWithID:(NSString *)itemID inDatabase:(FMDatabase *)db;
 
+- (void) updateDatabaseAsynchronously;
+
 @end
 
 @implementation DataBaseManager
+
+@synthesize updateReciever = _updateReciever;
 
 + (NSString *) dataBasePathForUser:(NSString *)username {
     NSString *dataBaseFileName = [NSString stringWithFormat:@"%@db.sqlite3", username];
@@ -81,6 +85,22 @@
             [self resetDatabase];
         else
             [self setHierarchySyncStateFromDatabase];
+    }
+    
+    return self;
+}
+
+- (id) initWithDatabaseForUser:(NSString *)username withUpdateReciever:(id<DataBaseManagerUpdateReciever>)reciever {
+    self = [super init];
+    if (self) {
+        databasePath = [[DataBaseManager dataBasePathForUser:username] retain];
+        //[[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
+        if (![[NSFileManager defaultManager] fileExistsAtPath:databasePath])
+            [self resetDatabase];
+        else
+            [self setHierarchySyncStateFromDatabase];
+        
+        self.updateReciever = reciever;
     }
     
     return self;
@@ -319,26 +339,32 @@
 
 - (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary {
     ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+    BOOL result;
     
     if ([whisperer sendMessageUsingDictionary:messageDictionary]) {
         FMDatabase *db = [[FMDatabase alloc] initWithPath:databasePath];
-        if (![db open]) {
+        if ([db open]) {
+            [self addItemUsingDictionary:messageDictionary inDatabase:db];
+            
+            [db close];
+            [db release];
+            
+            result = YES;
+        }
+        else {
             NSLog(@"Database open error");
             [db release];
-            return nil;
+            result =  NO;
         }
-        
-        [self addItemUsingDictionary:messageDictionary inDatabase:db];
-        
-        [db close];
-        [db release];
-        
-        return YES;
     }
     else {
         NSLog(@"Can't create new message");
-        return NO;
+        result =  NO;
     }
+    
+    [whisperer release];
+    
+    return result;
 }
 
 - (void) addFolderUsingDictionary:(NSDictionary *)folderDictionary inDatabase:(FMDatabase *)db {
@@ -426,6 +452,89 @@
 
 - (void) deleteRecipientsForMessageWithID:(NSString *)itemID inDatabase:(FMDatabase *)db {
     [db executeUpdateWithFormat:@"DELETE FROM RECIPIENTS WHERE ItemID = %@", itemID];
+}
+
+- (void) updateDatabaseAsynchronously {
+    FMDatabase *db = [[FMDatabase alloc] initWithPath:databasePath];
+    [db setLogsErrors:YES];
+    if (![db open]) {
+        NSLog(@"Database open error");
+        [db release];
+        return;
+    }
+    
+    NSString *folderID = [self.updateReciever currentFolderID];
+    BOOL updateNeeded = NO;
+    
+    ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+    NSDictionary *hierarchyChanges = [whisperer syncFolderHierarchyUsingSyncState:hierarchySyncState];
+    if (![hierarchySyncState isEqualToString:[hierarchyChanges objectForKey:@"SyncState"]]) {
+        NSArray *hierarchyCreates = [hierarchyChanges objectForKey:@"Create"];
+        NSArray *hierarchyUpdates = [hierarchyChanges objectForKey:@"Update"];
+        NSArray *hierarchyDeletes = [hierarchyChanges objectForKey:@"Delete"];
+        
+        for (NSDictionary *folderToCreate in hierarchyCreates) {
+            [self addFolderUsingDictionary:folderToCreate inDatabase:db];
+            if (!updateNeeded && [[folderToCreate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                updateNeeded = YES;
+        }
+        for (NSDictionary *folderToUpdate in hierarchyUpdates) {
+            [self updateFolderUsingDictionary:folderToUpdate inDatabase:db];
+            if (!updateNeeded && [[folderToUpdate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                updateNeeded = YES;
+        }
+        for (NSDictionary *folderToDelete in hierarchyDeletes) {
+            [self deleteFoldeUsingDictionary:folderToDelete inDatabase:db];
+            if (!updateNeeded && [[folderToDelete objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                updateNeeded = YES;
+        }
+        
+        [self setHierarchySyncState:[hierarchyChanges objectForKey:@"SyncState"]];
+    }
+    
+    FMResultSet *folders = [db executeQuery:@"SELECT * FROM FOLDERS"];
+    while ([folders next]) {
+        NSString *currentFolderID = [folders stringForColumn:@"FolderID"];
+        NSString *currentSyncState = [folders stringForColumn:@"SyncState"];
+        
+        NSDictionary *folderChanges = [whisperer syncItemsInFoldeWithID:currentFolderID usingSyncState:currentSyncState];
+        NSString *folderChangesSyncState = [folderChanges objectForKey:@"SyncState"];
+        
+        if (![currentSyncState isEqualToString:folderChangesSyncState]) {
+            NSArray *folderCreates = [folderChanges objectForKey:@"Create"];
+            NSArray *folderUpdates = [folderChanges objectForKey:@"Update"];
+            NSArray *folderDeletes = [folderChanges objectForKey:@"Delete"];
+            
+            for (NSDictionary *itemToCreate in folderCreates) {
+                [self addItemUsingDictionary:itemToCreate inDatabase:db];
+                [self addRecipientsForMessageWithID:[itemToCreate objectForKey:@"ItemID"] usingArray:[itemToCreate objectForKey:@"Recipients"] inDatabase:db];
+                if (!updateNeeded && [[itemToCreate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                    updateNeeded = YES;
+            }
+            for (NSDictionary *itemToUpdate in folderUpdates) {
+                [self updateItemUsingDictionary:itemToUpdate inDatabase:db];
+                [self updateRecipientsForMessageWithID:[itemToUpdate objectForKey:@"ItemID"] usingArray:[itemToUpdate objectForKey:@"Recipients"] inDatabase:db];
+                if (!updateNeeded && [[itemToUpdate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                    updateNeeded = YES;
+            }
+            for (NSDictionary *itemToDelete in folderDeletes) {
+                [self deleteItemUsingDictionary:itemToDelete inDatabase:db];
+                [self deleteRecipientsForMessageWithID:[itemToDelete objectForKey:@"ItemID"] inDatabase:db];
+                if (!updateNeeded && [[itemToDelete objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                    updateNeeded = YES;
+            }
+            
+            [self updateSyncStateForFolder:currentFolderID usingSyncState:folderChangesSyncState inDatabase:db];
+        }
+    }
+    
+    [db close];
+    [db release];
+    [whisperer release];
+    
+    if (updateNeeded) {
+        [self.updateReciever dataBaseManager:self haveAnUpdate:[self foldersAndItemsInFolderWithID:folderID]];
+    }
 }
 
 - (NSDictionary *) updateDatabaseSynchronously {
