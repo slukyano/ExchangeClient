@@ -14,7 +14,7 @@
 #import "Defines.h"
 
 @interface TableViewController () {
-    NSString *currentFolderID;
+    //NSString *currentFolderID;
 }
 @end
 
@@ -35,7 +35,8 @@
 
 - (void)viewDidLoad
 {
-    currentFolderID = [[ExchangeClientDataSingleton instance] messageRootFolderID];
+    [[ExchangeClientDataSingleton instance] setCurrentFolderID:[[ExchangeClientDataSingleton instance] messageRootFolderID]];
+    [[ExchangeClientDataSingleton instance] reloadItemsInCurrentFolder];
     
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
@@ -118,7 +119,7 @@
         cell.textLabel.text = [[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"Subject"];
         cell.imageView.image = [UIImage imageNamed:@"mail"];
     } else {
-        cell.textLabel.text = @"Wrong DataType";
+        cell.textLabel.text = @"<<Wrong DataType>>";
         cell.imageView.image = [UIImage imageNamed:@"mail"];
     }
     
@@ -171,18 +172,21 @@
     NSInteger currentDataType = [[[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DataType"] integerValue];
     if (currentDataType == DataTypeFolder) {
         if ([[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"DisplayName"] == @"/...") {
-            currentFolderID = [[ExchangeClientDataSingleton instance] ParentIDForFolderWithID:currentFolderID];
+            [ExchangeClientDataSingleton instance].currentFolderID = [[ExchangeClientDataSingleton instance]
+                                                                      parentIDForCurrentFolder];
         } else {
-            currentFolderID = [[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row] valueForKey:@"FolderID"];
+            [ExchangeClientDataSingleton instance].currentFolderID = [[[ExchangeClientDataSingleton instance]
+                                                                       objectAtIndex:indexPath.row] valueForKey:@"FolderID"];
         }
-        [[ExchangeClientDataSingleton instance] ItemsInFolderWithID:currentFolderID];
+        
+        [[ExchangeClientDataSingleton instance] reloadItemsInCurrentFolder];
         [self.tableView reloadData];
     } else if (currentDataType == DataTypeEMail) {
-        ContentViewController *contentViewController = [[ContentViewController alloc] initWithMessage:[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row]];
+        ContentViewController *contentViewController = [[ContentViewController alloc]
+                                                        initWithMessage:[[ExchangeClientDataSingleton instance] objectAtIndex:indexPath.row]];
         [self.navigationController pushViewController:contentViewController animated:YES];
         [contentViewController release];
     }
-    
 }
 
 @end

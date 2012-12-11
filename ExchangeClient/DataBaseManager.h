@@ -13,7 +13,9 @@
 
 @interface DataBaseManager : NSObject
 
-@property (nonatomic, assign) id<DataBaseManagerUpdateReciever> updateReciever;
+@property (assign) id<DataBaseManagerUpdateReciever> updateReciever;
+// Если == YES, база получает обновления при каждом запросе, если в базе нет ни одной записи, соответствующей запросу.
+@property (nonatomic, assign, getter = doesUpdateAlways) BOOL updateAlways;
 
 - (id) initWithDatabaseForUser:(NSString *)username;
 - (id) initWithDatabaseForUser:(NSString *)username withUpdateReciever:(id<DataBaseManagerUpdateReciever>)reciever;
@@ -24,6 +26,7 @@
 - (NSArray *) foldersAndItemsInFolderWithID:(NSString *)folderID;
 - (NSString *) parentIDForFolderWithID:(NSString *)folderID;
 - (NSDictionary *) updateDatabaseSynchronously;
+- (void) updateDatabaseAsynchronously;
 - (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary;
 
 @end
@@ -31,6 +34,6 @@
 @protocol DataBaseManagerUpdateReciever <NSObject>
 
 - (NSString *) currentFolderID;
-- (void) dataBaseManager:(DataBaseManager *)db haveAnUpdate:(NSArray *)newFolderContent;
+- (void) dataBaseManager:(DataBaseManager *)db haveAnUpdate:(NSArray *)newFolderContent forFolderWithID:(NSString *)folderID;
 
 @end

@@ -66,20 +66,21 @@
     [formatter release];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeFolder], @"DataType",
-            folderID, @"FolderID",
-            folderIDChangeKey, @"FolderIDChangeKey",
-            parentFolderID, @"ParentFolderID",
-            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
-            displayName, @"DisplayName",
-            totalCount, @"TotalCount",
-            unreadCount, @"UnreadCount", nil];
+            folderID ? folderID : @"", @"FolderID",
+            folderIDChangeKey ? folderIDChangeKey : @"", @"FolderIDChangeKey",
+            parentFolderID ? parentFolderID : @"", @"ParentFolderID",
+            parentFolderIDChangeKey ? parentFolderIDChangeKey : @"", @"ParentFolderIDChangeKey",
+            displayName ? displayName : @"", @"DisplayName",
+            totalCount ? totalCount : [NSNumber numberWithInteger:0], @"TotalCount",
+            unreadCount ? unreadCount : [NSNumber numberWithInteger:0], @"UnreadCount", nil];
 }
 
 - (NSDictionary *) dictionaryForMailboxXML:(GDataXMLElement *)mailboxXML {
     NSString *name = [[[mailboxXML elementsForName:@"t:Name"] objectAtIndex:0] stringValue];
     NSString *emailAddress = [[[mailboxXML elementsForName:@"t:EmailAddress"] objectAtIndex:0] stringValue];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", emailAddress, @"EmailAddress", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:name ? name : @"", @"Name",
+            emailAddress ? emailAddress : @"", @"EmailAddress", nil];
 }
 
 - (NSDictionary *) dictionaryForMessageXML:(GDataXMLElement *)messageXML {
@@ -109,12 +110,12 @@
     NSDictionary *from = [self dictionaryForMailboxXML:fromMailboxXML];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeEMail], @"DataType",
-            itemID, @"ItemID",
-            itemIDChangeKey, @"ItemIDChangeKey",
-            parentFolderID, @"ParentFolderID",
-            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
-            subject, @"Subject",
-            body, @"Body",
+            itemID ? itemID : @"", @"ItemID",
+            itemIDChangeKey ? itemIDChangeKey : @"", @"ItemIDChangeKey",
+            parentFolderID ? parentFolderID : @"", @"ParentFolderID",
+            parentFolderIDChangeKey ? parentFolderIDChangeKey : @"", @"ParentFolderIDChangeKey",
+            subject ? subject : @"", @"Subject",
+            body ? body : @"", @"Body",
             [NSNumber numberWithUnsignedInteger:bodyType], @"BodyType",
             recipients, @"Recipients",
             from, @"From", nil];

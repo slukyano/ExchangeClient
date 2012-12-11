@@ -7,10 +7,12 @@
 //
 
 #import <Foundation/Foundation.h>
+#import "DataBaseManager.h"
 
-@interface ExchangeClientDataSingleton : NSObject
+@interface ExchangeClientDataSingleton : NSObject <DataBaseManagerUpdateReciever>
 
 @property (nonatomic, readonly, getter = messageRootFolderID) NSString *messageRootFolderID;
+@property (retain, getter = currentFolderID) NSString *currentFolderID;
 
 + (ExchangeClientDataSingleton *)instance;
 
@@ -20,8 +22,10 @@
 - (void) removeObjectAtIndex:(NSUInteger)index;
 - (void) replaceObjectAtIndex:(NSUInteger)index withObject:(id)anObject;
 
-- (void) ItemsInFolderWithID:(NSString *)currentFolderID;
-- (NSString *)ParentIDForFolderWithID:(NSString *)currentFolderID;
+- (void) loadItemsInFolderWithID:(NSString *)currentFolderID;
+- (void) reloadItemsInCurrentFolder;
+- (NSString *)parentIDForFolderWithID:(NSString *)currentFolderID;
+- (NSString *)parentIDForCurrentFolder;
 
 - (NSString *)messageRootFolderID;
 

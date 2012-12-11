@@ -49,6 +49,7 @@
 @implementation DataBaseManager
 
 @synthesize updateReciever = _updateReciever;
+@synthesize updateAlways = _updateAlways;
 
 + (NSString *) dataBasePathForUser:(NSString *)username {
     NSString *dataBaseFileName = [NSString stringWithFormat:@"%@db.sqlite3", username];
@@ -80,7 +81,7 @@
     self = [super init];
     if (self) {
         databasePath = [[DataBaseManager dataBasePathForUser:username] retain];
-        [[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
+        //[[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
         if (![[NSFileManager defaultManager] fileExistsAtPath:databasePath])
             [self resetDatabase];
         else
@@ -94,7 +95,6 @@
     self = [super init];
     if (self) {
         databasePath = [[DataBaseManager dataBasePathForUser:username] retain];
-        //[[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
         if (![[NSFileManager defaultManager] fileExistsAtPath:databasePath])
             [self resetDatabase];
         else
@@ -135,11 +135,6 @@
 
     NSString *result = @"";
     
-    /*FMResultSet *resultSetDebug = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS"];
-    while ([resultSetDebug next]) {
-        NSLog(@"%@ - %@", [resultSetDebug stringForColumn:@"ParameterName"], [resultSetDebug stringForColumn:@"ParameterValue"]);
-    }*/
-    
     FMResultSet *resultSet = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS WHERE ParameterName = %@", @"HierarchySyncState"];
     if ([resultSet next]) {
         result = [resultSet stringForColumn:@"ParameterValue"];
@@ -150,6 +145,8 @@
     
     [self setHierarchySyncState:result];
 }
+
+// Получение словарей из результата запроса к базе
 
 - (NSDictionary *) dictionaryForFolderFromResultSet:(FMResultSet *)resultSet {
     NSString *folderID = [resultSet stringForColumn:@"FolderID"];
@@ -162,21 +159,22 @@
     NSString *folderSyncState = [resultSet stringForColumn:@"SyncState"];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInteger:DataTypeFolder], @"DataType",
-            folderID, @"FolderID",
-            folderIDChangeKey, @"FolderIDChangeKey",
-            parentFolderID, @"ParentFolderID",
-            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
-            displayName, @"DisplayName",
+            folderID ? folderID : @"", @"FolderID",
+            folderIDChangeKey ? folderIDChangeKey : @"", @"FolderIDChangeKey",
+            parentFolderID ? parentFolderID : @"", @"ParentFolderID",
+            parentFolderIDChangeKey ? parentFolderIDChangeKey : @"", @"ParentFolderIDChangeKey",
+            displayName ? displayName : @"", @"DisplayName",
             totalCount, @"TotalCount",
             unreadCount, @"UnreadCount",
-            folderSyncState, @"SyncState", nil];
+            folderSyncState ? folderSyncState : @"", @"SyncState", nil];
 }
 
 - (NSDictionary *) dictionaryForMailboxFromResultSet:(FMResultSet *)resultSet {
     NSString *name = [resultSet stringForColumn:@"Name"];
     NSString *emailAddress = [resultSet stringForColumn:@"EmailAddress"];
     
-    return [NSDictionary dictionaryWithObjectsAndKeys:name, @"Name", emailAddress, @"EmailAddress", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:name ? name : @"", @"Name",
+            emailAddress ? emailAddress : @"", @"EmailAddress", nil];
 }
 
 - (NSDictionary *) dictionaryForItemFromResultSet:(FMResultSet *)resultSet {
@@ -207,19 +205,22 @@
     
     NSString *fromName = [resultSet stringForColumn:@"FromName"];
     NSString *fromEmailAddress = [resultSet stringForColumn:@"FromEmailAddress"];
-    NSDictionary *from = [NSDictionary dictionaryWithObjectsAndKeys:fromName, @"Name", fromEmailAddress, @"EmailAddress", nil];
+    NSDictionary *from = [NSDictionary dictionaryWithObjectsAndKeys:fromName ? fromName : @"", @"Name",
+                          fromEmailAddress ? fromEmailAddress : @"", @"EmailAddress", nil];
     
     return [NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithUnsignedInteger:DataTypeEMail], @"DataType",
-            itemID, @"ItemID",
-            itemIDChangeKey, @"ItemIDChangeKey",
-            parentFolderID, @"ParentFolderID",
-            parentFolderIDChangeKey, @"ParentFolderIDChangeKey",
-            subject, @"Subject",
-            body, @"Body",
+            itemID ? itemID : @"", @"ItemID",
+            itemIDChangeKey ? itemIDChangeKey : @"", @"ItemIDChangeKey",
+            parentFolderID ? parentFolderID : @"", @"ParentFolderID",
+            parentFolderIDChangeKey ? parentFolderIDChangeKey : @"", @"ParentFolderIDChangeKey",
+            subject ? subject : @"", @"Subject",
+            body ? subject : @"", @"Body",
             [NSNumber numberWithUnsignedInteger:bodyType], @"BodyType",
             recipients, @"Recipients",
             from, @"From", nil];
 }
+
+// Запросы к базе и серверу
 
 - (NSDictionary *) folderWithID:(NSString *)folderID {
     FMDatabase *db = [[FMDatabase alloc] initWithPath:databasePath];
@@ -295,8 +296,20 @@
     FMResultSet *resultSet = [db executeQueryWithFormat:@"SELECT * FROM FOLDERS WHERE ParentFolderID = %@", folderID];
     NSMutableArray *result = [NSMutableArray array];
     
-    while ([resultSet next]) {
-        [result addObject:[self dictionaryForFolderFromResultSet:resultSet]];
+    if ([resultSet next]) {
+        do {
+            [result addObject:[self dictionaryForFolderFromResultSet:resultSet]];
+        } while ([resultSet next]);
+    }
+    else {
+        if (self.updateAlways) {
+            ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+            NSArray *folders = [whisperer getFoldersInFolderWithID:folderID];
+            for (NSDictionary *folder in folders) {
+                [self addFolderUsingDictionary:folder inDatabase:db];
+                [result addObject:folder];
+            }
+        }
     }
     
     [db close];
@@ -316,8 +329,20 @@
     FMResultSet *resultSet = [db executeQueryWithFormat:@"SELECT * FROM ITEMS WHERE ParentFolderID = %@", folderID];
     NSMutableArray *result = [NSMutableArray array];
     
-    while ([resultSet next]) {
-        [result addObject:[self dictionaryForItemFromResultSet:resultSet]];
+    if ([resultSet next]) {
+        do {
+            [result addObject:[self dictionaryForItemFromResultSet:resultSet]];
+        } while ([resultSet next]);
+    }
+    else {
+        if (self.updateAlways) {
+            ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
+            NSArray *items = [whisperer getItemsInFolderWithID:folderID];
+            for (NSDictionary *item in items) {
+                [self addItemUsingDictionary:item inDatabase:db];
+                [result addObject:item];
+            }
+        }
     }
     
     [db close];
@@ -336,6 +361,8 @@
 - (NSString *) parentIDForFolderWithID:(NSString *)folderID {
     return [[self folderWithID:folderID] objectForKey:@"ParentFolderID"];
 }
+
+// Запрос на создание нового сообщения
 
 - (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary {
     ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
@@ -367,6 +394,8 @@
     return result;
 }
 
+// Частичное обновление базы
+
 - (void) addFolderUsingDictionary:(NSDictionary *)folderDictionary inDatabase:(FMDatabase *)db {
     [db executeUpdate:@"INSERT INTO FOLDERS VALUES ((:FolderID), (:FolderIDChangeKey), (:ParentFolderID), (:ParentFolderIDChangeKey), (:DisplayName), (:TotalCount), (:UnreadCount), (:SyncState))" withParameterDictionary:folderDictionary];
 }
@@ -388,16 +417,24 @@
     NSString *fromName = [from objectForKey:@"Name"];
     NSString *fromEmailAddress = [from objectForKey:@"EmailAddress"];
     
+    NSString *itemID = [itemDictionary objectForKey:@"ItemID"];
+    NSString *itemIDChangeKey = [itemDictionary objectForKey:@"ItemIDChangeKey"];
+    NSString *parentFolderID = [itemDictionary objectForKey:@"ParentFolderID"];
+    NSString *parentFolderIDChangeKey = [itemDictionary objectForKey:@"ParentFolderIDChangeKey"];
+    NSString *subject = [itemDictionary objectForKey:@"Subject"];
+    NSString *body = [itemDictionary objectForKey:@"Body"];
+    NSNumber *bodyType = [itemDictionary objectForKey:@"BodyType"];
+    
     NSDictionary *modifiedItemDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:
-                                                   [itemDictionary objectForKey:@"ItemID"], @"ItemID",
-                                                   [itemDictionary objectForKey:@"ItemIDChangeKey"], @"ItemIDChangeKey",
-                                                   [itemDictionary objectForKey:@"ParentFolderID"], @"ParentFolderID",
-                                                   [itemDictionary objectForKey:@"ParentFolderIDChangeKey"], @"ParentFolderIDChangeKey",
-                                                   [itemDictionary objectForKey:@"Subject"], @"Subject",
-                                                   [itemDictionary objectForKey:@"Body"], @"Body",
-                                                   [itemDictionary objectForKey:@"BodyType"], @"BodyType",
-                                                   fromName, @"FromName",
-                                                   fromEmailAddress, @"FromEmailAddress", nil];
+                                            itemID ? itemID : @"", @"ItemID",
+                                            itemIDChangeKey ? itemIDChangeKey : @"", @"ItemIDChangeKey",
+                                            parentFolderID ? parentFolderID : @"", @"ParentFolderID",
+                                            parentFolderIDChangeKey ? parentFolderIDChangeKey : @"", @"ParentFolderIDChangeKey",
+                                            subject ? subject : @"", @"Subject",
+                                            body ? body : @"", @"Body",
+                                            bodyType ? bodyType : [NSNumber numberWithInteger:0], @"BodyType",
+                                            fromName ? fromName : @"", @"FromName",
+                                            fromEmailAddress ? fromEmailAddress : @"", @"FromEmailAddress", nil];
     
     
     [db executeUpdate:@"INSERT INTO ITEMS VALUES ((:ItemID), (:ItemIDChangeKey), (:ParentFolderID), (:ParentFolderIDChangeKey), (:Subject), (:Body), (:BodyType), (:FromName), (:FromEmailAddress))" withParameterDictionary:modifiedItemDictionary];
@@ -410,16 +447,24 @@
     NSString *fromName = [from objectForKey:@"Name"];
     NSString *fromEmailAddress = [from objectForKey:@"EmailAddress"];
     
-    NSMutableDictionary *modifiedItemDictionary = [[NSMutableDictionary alloc] initWithObjectsAndKeys:
-                                                   [itemDictionary objectForKey:@"ItemID"], @"ItemID",
-                                                   [itemDictionary objectForKey: @"ItemIDChangeKey"], @"ItemIDChangeKey",
-                                                   [itemDictionary objectForKey:@"ParentFolderID"], @"ParentFolderID",
-                                                   [itemDictionary objectForKey:@"ParentFolderIDChangeKey"], @"ParentFolderIDChangeKey",
-                                                   [itemDictionary objectForKey:@"Subject"], @"Subject",
-                                                   [itemDictionary objectForKey:@"Body"], @"Body",
-                                                   [itemDictionary objectForKey:@"BodyType"], @"BodyType",
-                                                   fromName, @"FromName",
-                                                   fromEmailAddress, @"FromEmailAddress", nil];
+    NSString *itemID = [itemDictionary objectForKey:@"ItemID"];
+    NSString *itemIDChangeKey = [itemDictionary objectForKey:@"ItemIDChangeKey"];
+    NSString *parentFolderID = [itemDictionary objectForKey:@"ParentFolderID"];
+    NSString *parentFolderIDChangeKey = [itemDictionary objectForKey:@"ParentFolderIDChangeKey"];
+    NSString *subject = [itemDictionary objectForKey:@"Subject"];
+    NSString *body = [itemDictionary objectForKey:@"Body"];
+    NSNumber *bodyType = [itemDictionary objectForKey:@"BodyType"];
+    
+    NSDictionary *modifiedItemDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:
+                                            itemID ? itemID : @"", @"ItemID",
+                                            itemIDChangeKey ? itemIDChangeKey : @"", @"ItemIDChangeKey",
+                                            parentFolderID ? parentFolderID : @"", @"ParentFolderID",
+                                            parentFolderIDChangeKey ? parentFolderIDChangeKey : @"", @"ParentFolderIDChangeKey",
+                                            subject ? subject : @"", @"Subject",
+                                            body ? body : @"", @"Body",
+                                            bodyType ? bodyType : [NSNumber numberWithInteger:0], @"BodyType",
+                                            fromName ? fromName : @"", @"FromName",
+                                            fromEmailAddress ? fromEmailAddress : @"", @"FromEmailAddress", nil];
     
     [db executeUpdate:@"UPDATE ITEMS SET ItemIDChangeKey = (:ItemIDChangeKey), ParentFolderID = (:ParentFolderID), ParentFolderIDChangeKey = (:ParentFolderIDChangeKey), Subject = (:Subject), Body = (:Body), BodyType = (:BodyType), FromName = (:FromName), FromEmailAddress = (:FromEmailAddress)" withParameterDictionary:modifiedItemDictionary];
     
@@ -431,9 +476,9 @@
 }
 
 - (void) addRecipientForMessageWithID:(NSString *)itemID usingDictionary:(NSDictionary *)recipientDictionary inDatabase:(FMDatabase *)db {
-    NSDictionary *modifiedRecipientDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:itemID, @"ItemID",
-                                                 [recipientDictionary objectForKey:@"Name"], @"Name",
-                                                 [recipientDictionary objectForKey:@"EmailAddress"], @"EmailAddress", nil];
+    NSDictionary *modifiedRecipientDictionary = [[NSDictionary alloc] initWithObjectsAndKeys:itemID ? itemID : @"", @"ItemID",
+                                                 [recipientDictionary objectForKey:@"Name"] ? [recipientDictionary objectForKey:@"Name"] : @"", @"Name",
+                                                 [recipientDictionary objectForKey:@"EmailAddress"] ? [recipientDictionary objectForKey:@"EmailAddress"] : @"", @"EmailAddress", nil];
     
     [db executeUpdate:@"INSERT INTO RECIPIENTS VALUES ((:ItemID), (:Name), (:EmailAddress))" withParameterDictionary:modifiedRecipientDictionary];
     
@@ -454,6 +499,8 @@
     [db executeUpdateWithFormat:@"DELETE FROM RECIPIENTS WHERE ItemID = %@", itemID];
 }
 
+// Обновление всей базы
+
 - (void) updateDatabaseAsynchronously {
     FMDatabase *db = [[FMDatabase alloc] initWithPath:databasePath];
     [db setLogsErrors:YES];
@@ -463,7 +510,7 @@
         return;
     }
     
-    NSString *folderID = [self.updateReciever currentFolderID];
+    NSString *recieverCurrentFolderID = [self.updateReciever currentFolderID];
     BOOL updateNeeded = NO;
     
     ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
@@ -475,17 +522,17 @@
         
         for (NSDictionary *folderToCreate in hierarchyCreates) {
             [self addFolderUsingDictionary:folderToCreate inDatabase:db];
-            if (!updateNeeded && [[folderToCreate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+            if (!updateNeeded && [[folderToCreate objectForKey:@"ParentFolderID"] isEqualToString:recieverCurrentFolderID])
                 updateNeeded = YES;
         }
         for (NSDictionary *folderToUpdate in hierarchyUpdates) {
             [self updateFolderUsingDictionary:folderToUpdate inDatabase:db];
-            if (!updateNeeded && [[folderToUpdate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+            if (!updateNeeded && [[folderToUpdate objectForKey:@"ParentFolderID"] isEqualToString:recieverCurrentFolderID])
                 updateNeeded = YES;
         }
         for (NSDictionary *folderToDelete in hierarchyDeletes) {
             [self deleteFoldeUsingDictionary:folderToDelete inDatabase:db];
-            if (!updateNeeded && [[folderToDelete objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+            if (!updateNeeded && [[folderToDelete objectForKey:@"ParentFolderID"] isEqualToString:recieverCurrentFolderID])
                 updateNeeded = YES;
         }
         
@@ -508,19 +555,19 @@
             for (NSDictionary *itemToCreate in folderCreates) {
                 [self addItemUsingDictionary:itemToCreate inDatabase:db];
                 [self addRecipientsForMessageWithID:[itemToCreate objectForKey:@"ItemID"] usingArray:[itemToCreate objectForKey:@"Recipients"] inDatabase:db];
-                if (!updateNeeded && [[itemToCreate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                if (!updateNeeded && [[itemToCreate objectForKey:@"ParentFolderID"] isEqualToString:recieverCurrentFolderID])
                     updateNeeded = YES;
             }
             for (NSDictionary *itemToUpdate in folderUpdates) {
                 [self updateItemUsingDictionary:itemToUpdate inDatabase:db];
                 [self updateRecipientsForMessageWithID:[itemToUpdate objectForKey:@"ItemID"] usingArray:[itemToUpdate objectForKey:@"Recipients"] inDatabase:db];
-                if (!updateNeeded && [[itemToUpdate objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                if (!updateNeeded && [[itemToUpdate objectForKey:@"ParentFolderID"] isEqualToString:recieverCurrentFolderID])
                     updateNeeded = YES;
             }
             for (NSDictionary *itemToDelete in folderDeletes) {
                 [self deleteItemUsingDictionary:itemToDelete inDatabase:db];
                 [self deleteRecipientsForMessageWithID:[itemToDelete objectForKey:@"ItemID"] inDatabase:db];
-                if (!updateNeeded && [[itemToDelete objectForKey:@"ParentFolderID"] isEqualToString:folderID])
+                if (!updateNeeded && [[itemToDelete objectForKey:@"ParentFolderID"] isEqualToString:recieverCurrentFolderID])
                     updateNeeded = YES;
             }
             
@@ -533,7 +580,7 @@
     [whisperer release];
     
     if (updateNeeded) {
-        [self.updateReciever dataBaseManager:self haveAnUpdate:[self foldersAndItemsInFolderWithID:folderID]];
+        [self.updateReciever dataBaseManager:self haveAnUpdate:[self foldersAndItemsInFolderWithID:recieverCurrentFolderID] forFolderWithID:recieverCurrentFolderID];
     }
 }
 
@@ -635,11 +682,6 @@
     [db executeUpdate:@"CREATE TABLE RECIPIENTS (ItemID, Name, EmailAddress)"];
     [db executeUpdate:@"CREATE TABLE PARAMETERS (ParameterName, ParameterValue)"];
     [db executeUpdateWithFormat:@"INSERT INTO PARAMETERS VALUES (%@, %@)", @"HierarchySyncState", @""];
-    
-    /*FMResultSet *resultSetDebug = [db executeQueryWithFormat:@"SELECT * FROM PARAMETERS"];
-    while ([resultSetDebug next]) {
-        NSLog(@"%@ - %@", [resultSetDebug stringForColumn:@"ParameterName"], [resultSetDebug stringForColumn:@"ParameterValue"]);
-    }*/
     
     if (hierarchySyncState)
         [hierarchySyncState release];

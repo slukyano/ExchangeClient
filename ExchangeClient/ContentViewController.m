@@ -33,6 +33,7 @@
     
     if (self) {
         mail = message;
+        NSLog(@"%@", mail);
     }
     return self;
 }
@@ -51,7 +52,8 @@
     
     subjectTextField.text = [mail valueForKey:@"Subject"];
     fromTextField.text = [[mail valueForKey:@"From"] valueForKey:@"EmailAddress"];
-    toTextField.text = [[[mail valueForKey:@"Recipients"] objectAtIndex:0] valueForKey:@"EmailAddress"];
+    if ([[mail valueForKey:@"Recipients"] count] != 0)
+        toTextField.text = [[[mail valueForKey:@"Recipients"] objectAtIndex:0] valueForKey:@"EmailAddress"];
     if ([mail valueForKey:@"BodyType"] ==  [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText])
         bodyTextView.text = [mail valueForKey:@"Body"];
     else {

@@ -30,6 +30,8 @@
 
 - (void) dealloc {
     self.serverURL = nil;
+    self.username = nil;
+    self.password = nil;
     [aXMLHandlerInstance release];
     
     [super dealloc];
@@ -53,9 +55,9 @@
     if (self) {
         NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
         
-        _serverURL = [NSURL URLWithString:[defaults stringForKey:@"address"]];
-        _username = [defaults stringForKey:@"name"];
-        _password = [defaults stringForKey:@"password"];
+        _serverURL = [[NSURL URLWithString:[defaults stringForKey:@"address"]] retain];
+        _username = [[defaults stringForKey:@"name"] retain];
+        _password = [[defaults stringForKey:@"password"] retain];
         aXMLHandlerInstance = [[XMLHandler alloc] init];
     }
     

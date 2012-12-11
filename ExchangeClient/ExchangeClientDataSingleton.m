@@ -1,4 +1,4 @@
-//
+	//
 //  ExchangeClientDataSingleton.m
 //  ExchangeClient
 //
@@ -15,8 +15,6 @@
     NSMutableArray *dataArray;
 }
 
-- (void) updateData;
-
 @end
 
 @implementation ExchangeClientDataSingleton
@@ -29,63 +27,6 @@ static ExchangeClientDataSingleton *_instance;
     @synchronized(self) {
         if (_instance == nil) {
             _instance = [[ExchangeClientDataSingleton alloc] init];
-            //[_instance updateData];
-            
-            /*NSDictionary *folderRoot = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        @"Folder", @"Type",
-                                        @"111", @"FolderID",
-                                       @"", @"ParentFolderID",
-                                       @"Root", @"DisplayName",
-                                        @"0", @"UnreadCount", nil];
-            NSDictionary *folderInbox = [NSDictionary dictionaryWithObjectsAndKeys:
-                                         @"Folder", @"Type",
-                                        @"222", @"FolderID",
-                                        @"111", @"ParentFolderID",
-                                        @"Inbox", @"DisplayName",
-                                        @"0", @"UnreadCount", nil];
-            NSDictionary *folderSent = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        @"Folder", @"Type",
-                                        @"333", @"FolderID",
-                                        @"111", @"ParentFolderID",
-                                        @"Sent", @"DisplayName",
-                                        @"0", @"UnreadCount", nil];
-            NSDictionary *folderImportant = [NSDictionary dictionaryWithObjectsAndKeys:
-                                        @"Folder", @"Type",
-                                        @"444", @"FolderID",
-                                        @"222", @"ParentFolderID",
-                                        @"Important", @"DisplayName",
-                                        @"1", @"UnreadCount", nil];
-            
-            NSDictionary *mail1 = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   @"Mail", @"Type",
-                                   @"m1", @"ItemID",
-                                   @"222", @"ParentFolderID",
-                                   @"Subject of mail1", @"Subject",
-                                   @"Body of mail1", @"Body",
-                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
-            NSDictionary *mail2 = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   @"Mail", @"Type",
-                                   @"m2", @"ItemID",
-                                   @"222", @"ParentFolderID",
-                                   @"Subject of mail2", @"Subject",
-                                   @"Body of mail2", @"Body",
-                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
-            NSDictionary *mail3 = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   @"Mail", @"Type",
-                                   @"m3", @"ItemID",
-                                   @"444", @"ParentFolderID",
-                                   @"Subject of mail3", @"Subject",
-                                   @"Body of mail3", @"Body",
-                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
-            NSDictionary *mail4 = [NSDictionary dictionaryWithObjectsAndKeys:
-                                   @"Mail", @"Type",
-                                   @"m1", @"ItemID",
-                                   @"333", @"ParentFolderID",
-                                   @"Subject of mail4", @"Subject",
-                                   @"Body of mail4", @"Body",
-                                   [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText], @"BodyType", nil];
-            _instance.dataArray = [NSMutableArray arrayWithObjects:folderRoot,folderInbox,folderSent, folderImportant,mail1,mail2,mail3,mail4, nil];*/
-            
         }
     }
     
@@ -95,12 +36,13 @@ static ExchangeClientDataSingleton *_instance;
 - (id) init {
     self = [super init];
     if (self) {
-        DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
-        dataArray = [NSMutableArray arrayWithArray:[dataBaseManager foldersAndItemsInFolderWithID:[self messageRootFolderID]]];
+        
     }
     
     return self;
 }
+
+// Работа с массивом
 
 - (NSUInteger) count {
     return [dataArray count];
@@ -122,76 +64,47 @@ static ExchangeClientDataSingleton *_instance;
     [dataArray replaceObjectAtIndex:index withObject:anObject];
 }
 
-- (void) ItemsInFolderWithID:(NSString *)currentFolderID{
+// Подготовка массива
+
+- (void) loadItemsInFolderWithID:(NSString *)currentFolderID{
     DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
-    dataArray = nil;
+    [dataBaseManager setUpdateAlways:YES];
+    
+    NSMutableArray *newDataArray = [[NSMutableArray alloc] init];
     if (![currentFolderID isEqualToString:_messageRootFolderID]){
         NSDictionary *backItem = [NSDictionary dictionaryWithObjectsAndKeys:
                                   [NSNumber numberWithInteger:DataTypeFolder], @"DataType",
                                   @"/...", @"DisplayName", nil];
-        [dataArray addObject:backItem];
+        [newDataArray addObject:backItem];
     }
-    [dataArray addObjectsFromArray:[dataBaseManager foldersAndItemsInFolderWithID:currentFolderID]];
-}
-
-- (NSString *)ParentIDForFolderWithID:(NSString *)currentFolderID{
-    DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
-    return [dataBaseManager parentIDForFolderWithID:currentFolderID];
-}
-
-- (void) updateData {
-    DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
-    //NSDictionary *changes = [dataBaseManager updateDatabaseSynchronously];
+    [newDataArray addObjectsFromArray:[dataBaseManager foldersAndItemsInFolderWithID:currentFolderID]];
+    
+    if (dataArray)
+        [dataArray release];
+    dataArray = newDataArray;
+    
+    //[dataBaseManager setUpdateReciever:self];
+    //[dataBaseManager updateDatabaseAsynchronously];
     
     [dataBaseManager release];
+}
+
+- (void) reloadItemsInCurrentFolder {
+    [self loadItemsInFolderWithID:self.currentFolderID];
+}
+
+- (NSString *) parentIDForCurrentFolder {
+    return [self parentIDForFolderWithID:self.currentFolderID];
+}
+
+// Работа с folderID's
+
+- (NSString *) parentIDForFolderWithID:(NSString *)currentFolderID{
+    DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+    NSString *result = [dataBaseManager parentIDForFolderWithID:currentFolderID];
+    [dataBaseManager release];
     
-    /*ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
-    NSMutableArray *createFolders = [[whisperer syncFolderHierarchyUsingSyncState:nil] objectForKey:@"Create"];
-    
-    NSMutableArray *createItems = [NSMutableArray array];
-    for (NSDictionary *dict in createFolders) {
-        [createItems addObjectsFromArray:[[whisperer syncItemsInFoldeWithID:[dict objectForKey:@"FolderID"] usingSyncState:nil] objectForKey:@"Create"]];
-    }
-    
-    [dataArray addObjectsFromArray:createFolders];
-    [dataArray addObjectsFromArray:createItems];
-    
-    NSString *inboxID = [[whisperer getFolderWithDistinguishedID:@"inbox"] objectForKey:@"FolderID"];
-    for (NSDictionary *dict in dataArray) {
-        if ([dict objectForKey:@"ParentFolderID"] == inboxID)
-            NSLog(@"%@", dict);
-    }
-    NSLog(@"%@", [whisperer getItemsInFolderWithDistinguishedID:@"inbox"]);
-    [whisperer release];
-    
-    [dataArray addObjectsFromArray:[changes objectForKey:@"Create"]];
-    
-    for (NSDictionary *objectToUpdate in [changes objectForKey:@"Update"]) {
-        for (NSDictionary *currentObject in dataArray)
-            if (([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
-                 && [[objectToUpdate objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
-                 && [[currentObject objectForKey:@"FolderID "] isEqualToString:[objectToUpdate objectForKey:@"FolderID"]])
-                || ([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
-                    && [[objectToUpdate objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
-                    && [[currentObject objectForKey:@"ItemID"] isEqualToString:[objectToUpdate objectForKey:@"ItemID"]]))
-            {
-                [dataArray removeObject:currentObject];
-                [dataArray addObject:objectToUpdate];
-            }
-    }
-    
-    for (NSDictionary *objectToDelete in [changes objectForKey:@"Delete"]) {
-        for (NSDictionary *currentObject in dataArray)
-            if (([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
-                 && [[objectToDelete objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeFolder]]
-                 && [[currentObject objectForKey:@"FolderID"] isEqualToString:[objectToDelete objectForKey:@"FolderID"]])
-                || ([[currentObject objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
-                    && [[objectToDelete objectForKey:@"DataType"] isEqualToNumber:[NSNumber numberWithInt:DataTypeEMail]]
-                    && [[currentObject objectForKey:@"ItemID"] isEqualToString:[objectToDelete objectForKey:@"ItemID"]]))
-            {
-                [dataArray removeObject:currentObject];
-            }
-    }*/
+    return result;
 }
 
 - (NSString *) messageRootFolderID {
@@ -205,6 +118,13 @@ static ExchangeClientDataSingleton *_instance;
         [whisperer release];
     }
     return _messageRootFolderID;
+}
+
+// Методы DataBaseManagerUpdateReciever
+
+- (void) dataBaseManager:(DataBaseManager *)db haveAnUpdate:(NSArray *)newFolderContent forFolderWithID:(NSString *)folderID {
+    if ([folderID isEqualToString:self.currentFolderID])
+        [self reloadItemsInCurrentFolder];
 }
 
 @end
