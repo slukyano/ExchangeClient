@@ -333,7 +333,7 @@
     return result;
 }
 
-- (NSString *) ParentIDForFolderWithID:(NSString *)folderID {
+- (NSString *) parentIDForFolderWithID:(NSString *)folderID {
     return [[self folderWithID:folderID] objectForKey:@"ParentFolderID"];
 }
 

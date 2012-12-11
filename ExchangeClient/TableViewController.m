@@ -29,6 +29,10 @@
     return self;
 }
 
+- (BOOL) shouldAutorotate {
+    return NO;
+}
+
 - (void)viewDidLoad
 {
     currentFolderID = [[ExchangeClientDataSingleton instance] messageRootFolderID];

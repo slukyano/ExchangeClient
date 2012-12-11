@@ -10,4 +10,6 @@
 
 @interface ContentViewController : UIViewController
 - (id)initWithMessage:(NSDictionary*)message;
+- (IBAction)replyButton:(id)sender;
+- (IBAction)forwardButton:(id)sender;
 @end

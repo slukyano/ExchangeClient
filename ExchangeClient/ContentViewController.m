@@ -8,6 +8,7 @@
 
 #import "ContentViewController.h"
 #import "Defines.h"
+#import "NewMessageViewController.h"
 
 @interface ContentViewController ()
 {
@@ -36,6 +37,10 @@
     return self;
 }
 
+- (BOOL) shouldAutorotate {
+    return NO;
+}
+
 - (void)viewDidLoad
 {
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
@@ -45,6 +50,8 @@
     self.navigationItem.rightBarButtonItem = cancel;
     
     subjectTextField.text = [mail valueForKey:@"Subject"];
+    fromTextField.text = [[mail valueForKey:@"From"] valueForKey:@"EmailAddress"];
+    toTextField.text = [[[mail valueForKey:@"Recipients"] objectAtIndex:0] valueForKey:@"EmailAddress"];
     if ([mail valueForKey:@"BodyType"] ==  [NSNumber numberWithUnsignedInteger:EMailContentTypePlainText])
         bodyTextView.text = [mail valueForKey:@"Body"];
     else {
@@ -64,6 +71,18 @@
     [defaults synchronize];
     [self.navigationController popToRootViewControllerAnimated:YES];
     
+}
+
+- (IBAction)replyButton:(id)sender{
+    NewMessageViewController *newMessageViewController = [[NewMessageViewController alloc] initWithNibName:@"NewMessageViewController" bundle: nil];
+    [self.navigationController pushViewController:newMessageViewController animated:YES];
+    [newMessageViewController release];
+}
+
+- (IBAction)forwardButton:(id)sender{
+    NewMessageViewController *newMessageViewController = [[NewMessageViewController alloc] initWithNibName:@"NewMessageViewController" bundle: nil];
+    [self.navigationController pushViewController:newMessageViewController animated:YES];
+    [newMessageViewController release];
 }
 
 - (void)didReceiveMemoryWarning

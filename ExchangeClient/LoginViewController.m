@@ -29,11 +29,14 @@
     return self;
 }
 
-
+- (BOOL) shouldAutorotate {
+    return NO;
+}
 
 - (void)viewDidLoad
 {
     self.title = @"Login";
+    addressField.placeholder = @"https://yourserver/ews/exchange.asmx"; 
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if ([defaults boolForKey:@"logged"]) {
         TableViewController *tableViewController = [[TableViewController alloc] initWithNibName:@"TableViewController" bundle:nil];
