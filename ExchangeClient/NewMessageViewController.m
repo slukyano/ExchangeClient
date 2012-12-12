@@ -7,6 +7,8 @@
 //
 
 #import "NewMessageViewController.h"
+#import "DataBaseManager.h"
+#import "Defines.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface NewMessageViewController () {
@@ -39,8 +41,37 @@
     messageTextView.layer.borderWidth = 2.0f;
     messageTextView.layer.cornerRadius = 5;
     messageTextView.layer.borderColor = [[UIColor blackColor] CGColor];
+    
+    UIBarButtonItem *done =[[[UIBarButtonItem alloc]
+                               initWithBarButtonSystemItem:UIBarButtonSystemItemDone
+                               target:self
+                               action:@selector(doneButton)] autorelease];
+    
+    self.navigationItem.rightBarButtonItem = done;
+    
     [super viewDidLoad];
     // Do any additional setup after loading the view from its nib.
+}
+
+- (void) doneButton {
+    if ((fromTextField.text != @"") &
+        (toTextField.text != @"") &
+        (subjectTextField.text != @"") &
+        (messageTextView.text != @""))
+    {
+            DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+        NSDictionary *recipientsDict = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:@"TEST",@"Name",toTextField.text,@"EmailAddress",nil]];
+        
+        NSDictionary *mailDict = [NSDictionary dictionaryWithObjectsAndKeys:subjectTextField.text,
+                                  @"Subject", messageTextView.text,
+                                  @"Body", recipientsDict,
+                                  @"Recipients",
+                                  [NSNumber numberWithInteger:EMailContentTypePlainText],@"BodyType",nil];
+        [dataBaseManager sendMessageUsingDictionary:mailDict];
+        [dataBaseManager release];
+        [self.navigationController popViewControllerAnimated:YES];
+        
+    }
 }
 
 - (void)didReceiveMemoryWarning
