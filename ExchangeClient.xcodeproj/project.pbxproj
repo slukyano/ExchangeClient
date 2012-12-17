@@ -53,6 +53,7 @@
 		CE4A5B6D16713C5D00A629E9 /* FMResultSet.m in Sources */ = {isa = PBXBuildFile; fileRef = CE4A5B6816713C5D00A629E9 /* FMResultSet.m */; };
 		CE4A5B7116713C7A00A629E9 /* DataBaseManager.m in Sources */ = {isa = PBXBuildFile; fileRef = CE4A5B7016713C7A00A629E9 /* DataBaseManager.m */; };
 		CE4A5B731671FF8800A629E9 /* libsqlite3.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CE4A5B721671FF8700A629E9 /* libsqlite3.dylib */; };
+		CE75631E167B9BEF005478D3 /* MultithreadNotificationSupport.m in Sources */ = {isa = PBXBuildFile; fileRef = CE75631D167B9BEF005478D3 /* MultithreadNotificationSupport.m */; };
 		CE7EFB56165BDF320090B3C4 /* XMLHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = CE7EFB55165BDF320090B3C4 /* XMLHandler.m */; };
 		CEB11AC01654691700D862E6 /* GDataXMLNode.m in Sources */ = {isa = PBXBuildFile; fileRef = CEB11ABF1654691700D862E6 /* GDataXMLNode.m */; };
 		CEB11AC6165469A000D862E6 /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CEB11AC5165469A000D862E6 /* libxml2.dylib */; };
@@ -135,6 +136,8 @@
 		CE4A5B6F16713C7A00A629E9 /* DataBaseManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataBaseManager.h; sourceTree = "<group>"; };
 		CE4A5B7016713C7A00A629E9 /* DataBaseManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DataBaseManager.m; sourceTree = "<group>"; };
 		CE4A5B721671FF8700A629E9 /* libsqlite3.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };
+		CE75631C167B9BEF005478D3 /* MultithreadNotificationSupport.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MultithreadNotificationSupport.h; sourceTree = "<group>"; };
+		CE75631D167B9BEF005478D3 /* MultithreadNotificationSupport.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MultithreadNotificationSupport.m; sourceTree = "<group>"; };
 		CE7EFB54165BDF320090B3C4 /* XMLHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = XMLHandler.h; sourceTree = "<group>"; };
 		CE7EFB55165BDF320090B3C4 /* XMLHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = XMLHandler.m; sourceTree = "<group>"; };
 		CEB11ABE1654691700D862E6 /* GDataXMLNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GDataXMLNode.h; sourceTree = "<group>"; };
@@ -236,6 +239,7 @@
 				C3CB568B16501F3C002E75B2 /* AppDelegate.m */,
 				C318073B1650347C00F87853 /* User Interface */,
 				CE4A5B2C166BDF1C00A629E9 /* Data Management */,
+				CE75631A167B9BA5005478D3 /* Threading Support */,
 				CE7681F816530BDF009EE5E4 /* Connection management */,
 				CEB11ABC165468E900D862E6 /* XML Parsing */,
 				C31807391650345A00F87853 /* XIBs */,
@@ -352,6 +356,15 @@
 				CE4A5B6816713C5D00A629E9 /* FMResultSet.m */,
 			);
 			path = FMDB;
+			sourceTree = "<group>";
+		};
+		CE75631A167B9BA5005478D3 /* Threading Support */ = {
+			isa = PBXGroup;
+			children = (
+				CE75631C167B9BEF005478D3 /* MultithreadNotificationSupport.h */,
+				CE75631D167B9BEF005478D3 /* MultithreadNotificationSupport.m */,
+			);
+			name = "Threading Support";
 			sourceTree = "<group>";
 		};
 		CE7681F816530BDF009EE5E4 /* Connection management */ = {
@@ -476,6 +489,7 @@
 				CE4A5B6C16713C5D00A629E9 /* FMDatabaseQueue.m in Sources */,
 				CE4A5B6D16713C5D00A629E9 /* FMResultSet.m in Sources */,
 				CE4A5B7116713C7A00A629E9 /* DataBaseManager.m in Sources */,
+				CE75631E167B9BEF005478D3 /* MultithreadNotificationSupport.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

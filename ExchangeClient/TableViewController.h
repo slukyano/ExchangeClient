@@ -10,4 +10,6 @@
 
 @interface TableViewController : UITableViewController
 
+- (void) dataArrayUpdated;
+
 @end

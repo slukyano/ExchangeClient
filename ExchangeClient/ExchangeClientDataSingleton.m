@@ -68,7 +68,6 @@ static ExchangeClientDataSingleton *_instance;
 
 - (void) loadItemsInFolderWithID:(NSString *)currentFolderID{
     DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
-    [dataBaseManager setUpdateAlways:YES];
     
     NSMutableArray *newDataArray = [[NSMutableArray alloc] init];
     if (![currentFolderID isEqualToString:_messageRootFolderID]){
@@ -82,9 +81,6 @@ static ExchangeClientDataSingleton *_instance;
     if (dataArray)
         [dataArray release];
     dataArray = newDataArray;
-    
-    //[dataBaseManager setUpdateReciever:self];
-    //[dataBaseManager updateDatabaseAsynchronously];
     
     [dataBaseManager release];
 }
@@ -118,6 +114,12 @@ static ExchangeClientDataSingleton *_instance;
         [whisperer release];
     }
     return _messageRootFolderID;
+}
+
+- (void) databaseUpdated {
+    NSLog(@"Updating data array");
+    [self reloadItemsInCurrentFolder];
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"DataArrayUpdated" object:self];
 }
 
 // Методы DataBaseManagerUpdateReciever

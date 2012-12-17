@@ -9,6 +9,7 @@
 #import "NewMessageViewController.h"
 #import "DataBaseManager.h"
 #import "Defines.h"
+#import "ExchangeClientDataSingleton.h"
 #import <QuartzCore/QuartzCore.h>
 
 @interface NewMessageViewController () {
@@ -59,16 +60,26 @@
         (subjectTextField.text != @"") &
         (messageTextView.text != @""))
     {
-            DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
+        DataBaseManager *dataBaseManager = [[DataBaseManager alloc] initWithDatabaseForUser:@"sed2"];
         NSDictionary *recipientsDict = [NSArray arrayWithObject:[NSDictionary dictionaryWithObjectsAndKeys:@"TEST",@"Name",toTextField.text,@"EmailAddress",nil]];
         
-        NSDictionary *mailDict = [NSDictionary dictionaryWithObjectsAndKeys:subjectTextField.text,
-                                  @"Subject", messageTextView.text,
-                                  @"Body", recipientsDict,
-                                  @"Recipients",
+        NSDictionary *mailDict = [NSDictionary dictionaryWithObjectsAndKeys:
+                                  subjectTextField.text, @"Subject",
+                                  messageTextView.text, @"Body",
+                                  recipientsDict, @"Recipients",
                                   [NSNumber numberWithInteger:EMailContentTypePlainText],@"BodyType",nil];
-        [dataBaseManager sendMessageUsingDictionary:mailDict];
+        BOOL success = [dataBaseManager sendMessageUsingDictionary:mailDict];
+        
+        if (success)
+            NSLog(@"success!");
+        else
+            NSLog(@"something's wrong");
+        
         [dataBaseManager release];
+        
+        if (success)
+            [[ExchangeClientDataSingleton instance] databaseUpdated];
+        
         [self.navigationController popViewControllerAnimated:YES];
         
     }

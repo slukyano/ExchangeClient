@@ -19,15 +19,21 @@
 
 - (id) initWithDatabaseForUser:(NSString *)username;
 - (id) initWithDatabaseForUser:(NSString *)username withUpdateReciever:(id<DataBaseManagerUpdateReciever>)reciever;
+
 - (NSDictionary *) folderWithID:(NSString *)folderID;
 - (NSDictionary *) itemWithID:(NSString *)itemID;
 - (NSArray *) foldersInFolderWithID:(NSString *)folderID;
 - (NSArray *) itemsInFolderWithID:(NSString *)folderID;
 - (NSArray *) foldersAndItemsInFolderWithID:(NSString *)folderID;
+
 - (NSString *) parentIDForFolderWithID:(NSString *)folderID;
+
 - (NSDictionary *) updateDatabaseSynchronously;
-- (void) updateDatabaseAsynchronously;
+- (BOOL) updateDatabaseAsynchronously;
+
 - (BOOL) sendMessageUsingDictionary:(NSDictionary *)messageDictionary;
+
+- (void) startUpdating;
 
 @end
 

@@ -17,3 +17,5 @@ typedef enum {
     EMailContentTypePlainText,
     EMailContentTypeHTML
 } EMailContentType;
+
+#define SECONDARY_THREAD_SLEEP_INTERVAL 300

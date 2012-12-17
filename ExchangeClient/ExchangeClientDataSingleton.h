@@ -29,4 +29,6 @@
 
 - (NSString *)messageRootFolderID;
 
+- (void) databaseUpdated;
+
 @end

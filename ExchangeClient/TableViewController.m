@@ -12,11 +12,7 @@
 #import "NewMessageViewController.h"
 #import "TableCell.h"
 #import "Defines.h"
-
-@interface TableViewController () {
-    //NSString *currentFolderID;
-}
-@end
+#import "MultithreadNotificationSupport.h"
 
 @implementation TableViewController
 
@@ -37,6 +33,11 @@
 {
     [[ExchangeClientDataSingleton instance] setCurrentFolderID:[[ExchangeClientDataSingleton instance] messageRootFolderID]];
     [[ExchangeClientDataSingleton instance] reloadItemsInCurrentFolder];
+    
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(dataArrayUpdated) name:@"DataArrayUpdated" object:nil];
+    
+    MultithreadNotificationSupport *support = [[MultithreadNotificationSupport alloc] init];
+    [NSThread detachNewThreadSelector:@selector(startNewThread) toTarget:support withObject:nil];
     
     UIBarButtonItem *cancel =[[[UIBarButtonItem alloc]
                                initWithBarButtonSystemItem:UIBarButtonSystemItemCancel
@@ -187,6 +188,10 @@
         [self.navigationController pushViewController:contentViewController animated:YES];
         [contentViewController release];
     }
+}
+
+- (void) dataArrayUpdated {
+    [self.tableView reloadData];
 }
 
 @end

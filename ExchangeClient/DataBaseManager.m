@@ -42,7 +42,7 @@
 - (void) updateRecipientsForMessageWithID:(NSString *) itemID usingArray:(NSArray *)recipientsArray inDatabase:(FMDatabase *)db;
 - (void) deleteRecipientsForMessageWithID:(NSString *)itemID inDatabase:(FMDatabase *)db;
 
-- (void) updateDatabaseAsynchronously;
+- (BOOL) updateDatabaseAsynchronously;
 
 @end
 
@@ -81,7 +81,7 @@
     self = [super init];
     if (self) {
         databasePath = [[DataBaseManager dataBasePathForUser:username] retain];
-        //[[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
+        [[NSFileManager defaultManager] removeItemAtPath:databasePath error:nil];
         if (![[NSFileManager defaultManager] fileExistsAtPath:databasePath])
             [self resetDatabase];
         else
@@ -305,6 +305,8 @@
         if (self.updateAlways) {
             ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
             NSArray *folders = [whisperer getFoldersInFolderWithID:folderID];
+            [whisperer release];
+            
             for (NSDictionary *folder in folders) {
                 [self addFolderUsingDictionary:folder inDatabase:db];
                 [result addObject:folder];
@@ -335,9 +337,11 @@
         } while ([resultSet next]);
     }
     else {
-        if (self.updateAlways) {
+        if (self.updateAlways && self.updateReciever) {
             ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
             NSArray *items = [whisperer getItemsInFolderWithID:folderID];
+            [whisperer release];
+            
             for (NSDictionary *item in items) {
                 [self addItemUsingDictionary:item inDatabase:db];
                 [result addObject:item];
@@ -377,6 +381,8 @@
             [db release];
             
             result = YES;
+            
+            
         }
         else {
             NSLog(@"Database open error");
@@ -501,17 +507,18 @@
 
 // Обновление всей базы
 
-- (void) updateDatabaseAsynchronously {
+- (BOOL) updateDatabaseAsynchronously {
     FMDatabase *db = [[FMDatabase alloc] initWithPath:databasePath];
     [db setLogsErrors:YES];
     if (![db open]) {
         NSLog(@"Database open error");
         [db release];
-        return;
+        return NO;
     }
     
     NSString *recieverCurrentFolderID = [self.updateReciever currentFolderID];
     BOOL updateNeeded = NO;
+    BOOL databaseUpdated = NO;
     
     ServerWhisperer *whisperer = [[ServerWhisperer alloc] initWithUserDefaults];
     NSDictionary *hierarchyChanges = [whisperer syncFolderHierarchyUsingSyncState:hierarchySyncState];
@@ -519,6 +526,7 @@
         NSArray *hierarchyCreates = [hierarchyChanges objectForKey:@"Create"];
         NSArray *hierarchyUpdates = [hierarchyChanges objectForKey:@"Update"];
         NSArray *hierarchyDeletes = [hierarchyChanges objectForKey:@"Delete"];
+        databaseUpdated = YES;
         
         for (NSDictionary *folderToCreate in hierarchyCreates) {
             [self addFolderUsingDictionary:folderToCreate inDatabase:db];
@@ -551,6 +559,7 @@
             NSArray *folderCreates = [folderChanges objectForKey:@"Create"];
             NSArray *folderUpdates = [folderChanges objectForKey:@"Update"];
             NSArray *folderDeletes = [folderChanges objectForKey:@"Delete"];
+            databaseUpdated = YES;
             
             for (NSDictionary *itemToCreate in folderCreates) {
                 [self addItemUsingDictionary:itemToCreate inDatabase:db];
@@ -582,6 +591,8 @@
     if (updateNeeded) {
         [self.updateReciever dataBaseManager:self haveAnUpdate:[self foldersAndItemsInFolderWithID:recieverCurrentFolderID] forFolderWithID:recieverCurrentFolderID];
     }
+    
+    return YES;
 }
 
 - (NSDictionary *) updateDatabaseSynchronously {
@@ -690,6 +701,17 @@
     
     [db close];
     [db release];
+}
+
+- (void) startUpdating {
+    for (;;) {
+        NSLog(@"Secondary thread");
+        BOOL databaseUpdated = [self updateDatabaseAsynchronously];
+        if (databaseUpdated)
+            [[NSNotificationCenter defaultCenter] postNotificationName:@"DatabaseHasAnUpdate" object:self];
+        
+        [NSThread sleepForTimeInterval:SECONDARY_THREAD_SLEEP_INTERVAL];
+    }
 }
 
 @end
