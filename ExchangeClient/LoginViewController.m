@@ -97,11 +97,7 @@
     
     
     
-    /*ServerWhisperer *serverWhispererInstance = [[ServerWhisperer alloc]
-                                                initWithServerURL:[NSURL URLWithString:@"https://mail.digdes.com/ews/exchange.asmx"]
-                                                withUsername:@"sed2"
-                                                withPassword:@"P@ssw0rd"];*/
-    //NSLog(@"%@", [serverWhispererInstance testUserCredential] ? @"YES" : @"NO");
+    
     
     
 }
